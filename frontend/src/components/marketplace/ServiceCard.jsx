@@ -18,8 +18,8 @@ export default function ServiceCard({ service }) {
       <div>
         {/* Top bar: Category badge + Icon */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <Badge variant="teal">{service.categoryName}</Badge>
-          <div className="w-9 h-9 rounded-md bg-accent-50 flex items-center justify-center flex-shrink-0">
+          <Badge variant="navy">{service.categoryName}</Badge>
+          <div className="w-9 h-9 rounded-md bg-accent-50 flex items-center justify-center flex-shrink-0 border border-accent-100">
             <IconComponent className="w-5 h-5 text-accent" aria-hidden="true" />
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function ServiceCard({ service }) {
 
         {/* Key benefits / offerings snippet */}
         {service.serviceTypes && service.serviceTypes.length > 0 && (
-          <ul className="space-y-1.5 mb-5 text-xs text-text-primary/80" aria-label="Key offerings">
+          <ul className="space-y-1.5 mb-5 text-xs text-text-primary/85" aria-label="Key offerings">
             {service.serviceTypes.slice(0, 2).map((item, idx) => (
               <li key={idx} className="flex items-start gap-1.5 line-clamp-1">
                 <CheckCircle className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" aria-hidden="true" />
@@ -59,7 +59,7 @@ export default function ServiceCard({ service }) {
 
         <Link
           to={`/get-quote?service=${encodeURIComponent(service.name)}&category=${encodeURIComponent(service.categorySlug)}`}
-          className="text-xs font-semibold text-accent hover:underline py-1 px-2.5 bg-accent-50/60 rounded"
+          className="text-xs font-semibold text-accent-700 hover:bg-accent hover:text-white transition-colors py-1 px-2.5 bg-accent-50 rounded border border-accent-200/70"
         >
           Get Quote
         </Link>

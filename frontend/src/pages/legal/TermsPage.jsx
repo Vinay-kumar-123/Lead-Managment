@@ -14,9 +14,9 @@ import {
 
 export default function TermsPage() {
   usePageMeta({
-    title: 'Terms & Conditions — KONNEVIA Marketplace Agreement',
-    description: 'Read the Terms & Conditions governing use of the KONNEVIA marketplace, facilitator role, provider standards, and commercial limitations.',
-    canonical: 'https://konnevia.in/terms',
+    title: 'Terms & Conditions — Dealsathi Marketplace Agreement',
+    description: 'Read the Terms & Conditions governing use of the Dealsathi marketplace, facilitator role, provider standards, and commercial limitations.',
+    canonical: 'https://dealsathi.in/terms',
   });
 
   return (
@@ -37,7 +37,7 @@ export default function TermsPage() {
               <span className="text-xs font-semibold text-text-muted">VERSION 2026.1</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight mb-3">
-              KONNEVIA Marketplace Terms & Conditions
+              Dealsathi Marketplace Terms & Conditions
             </h1>
             <p className="text-xs sm:text-sm text-text-muted">
               Effective Date: January 1, 2026 · Last Updated: November 12, 2026
@@ -51,7 +51,7 @@ export default function TermsPage() {
               <strong className="font-bold block text-amber-950 mb-0.5">
                 NOTICE: DRAFT TERMS SUBJECT TO FORMAL LEGAL COUNSEL REVIEW
               </strong>
-              These marketplace terms define the operational relationship between KONNEVIA, platform users, and independent service providers. This document represents a working operational draft and requires formal review and customization by qualified Indian legal counsel prior to commercial launch.
+              These marketplace terms define the operational relationship between Dealsathi, platform users, and independent service providers. This document represents a working operational draft and requires formal review and customization by qualified Indian legal counsel prior to commercial launch.
             </div>
           </div>
 
@@ -63,10 +63,10 @@ export default function TermsPage() {
                 1. Marketplace Role & Scope of Service
               </h2>
               <p>
-                KONNEVIA (&quot;the Platform&quot;) operates strictly as an intermediary technology marketplace connecting clients seeking specialized services with independent, third-party service providers across five core domains: Home & Construction, Events & Lifestyle, Business & Property, Digital & Professional, and Education & Career.
+                Dealsathi (&quot;the Platform&quot;) operates strictly as an intermediary technology marketplace connecting clients seeking specialized services with independent, third-party service providers across five core domains: Home & Construction, Events & Lifestyle, Business & Property, Digital & Professional, and Education & Career.
               </p>
               <div className="p-4 rounded-xl bg-slate-50 border border-border text-xs sm:text-sm text-primary font-semibold">
-                IMPORTANT DISTINCTION: KONNEVIA is not an employer, general contractor, architect, event producer, legal counsel, or financial consultant. We do not personally execute on-site construction, manage banquets, or deliver contracted technical deliverables.
+                IMPORTANT DISTINCTION: Dealsathi is not an employer, general contractor, architect, event producer, legal counsel, or financial consultant. We do not personally execute on-site construction, manage banquets, or deliver contracted technical deliverables.
               </div>
             </section>
 
@@ -75,7 +75,7 @@ export default function TermsPage() {
               <h2 className="text-xl sm:text-2xl font-bold text-primary">
                 2. User & Customer Responsibilities
               </h2>
-              <p>When utilizing KONNEVIA to source service professionals, clients agree to:</p>
+              <p>When utilizing Dealsathi to source service professionals, clients agree to:</p>
               <ul className="list-disc list-inside space-y-1.5 pl-2 text-sm text-text-muted">
                 <li>Provide accurate, genuine, and non-fraudulent project requirements and contact details.</li>
                 <li>Conduct independent due diligence, reference checks, and contract reviews before awarding contracts.</li>
@@ -104,10 +104,10 @@ export default function TermsPage() {
                 4. Scope of Provider Verification
               </h2>
               <p>
-                The label &quot;Verified Partner&quot; indicates that KONNEVIA&apos;s operations desk has confirmed initial trade registration, business location, portfolio samples, and contact coordinates at the time of onboarding.
+                The label &quot;Verified Partner&quot; indicates that Dealsathi&apos;s operations desk has confirmed initial trade registration, business location, portfolio samples, and contact coordinates at the time of onboarding.
               </p>
               <p className="text-text-muted text-xs sm:text-sm">
-                Verification does not constitute an ongoing financial guarantee, professional endorsement, or insurance bond by KONNEVIA regarding future project performance, craftsmanship quality, or post-completion warranty fulfillment.
+                Verification does not constitute an ongoing financial guarantee, professional endorsement, or insurance bond by Dealsathi regarding future project performance, craftsmanship quality, or post-completion warranty fulfillment.
               </p>
             </section>
 
@@ -117,10 +117,10 @@ export default function TermsPage() {
                 5. Commercial Model & Direct Contracting
               </h2>
               <p>
-                KONNEVIA operates on a transparent facilitation model. Introduction fees or listing memberships (where applicable) are agreed separately under bilateral partner agreements.
+                Dealsathi operates on a transparent facilitation model. Introduction fees or listing memberships (where applicable) are agreed separately under bilateral partner agreements.
               </p>
               <p>
-                All project contract disbursements, advance payments, milestone settlements, and retention fees are handled <strong>directly between the customer and the provider</strong>. KONNEVIA does not process payments or escrow customer funds on the platform during Phase 6.
+                All project contract disbursements, advance payments, milestone settlements, and retention fees are handled <strong>directly between the customer and the provider</strong>. Dealsathi does not process payments or escrow customer funds on the platform during Phase 6.
               </p>
             </section>
 
@@ -133,7 +133,7 @@ export default function TermsPage() {
                 Because service contracts are executed bilaterally between customers and providers, any dispute arising from milestone delays, craftsmanship defects, scope disagreements, or non-payment must be resolved directly between the contracting parties according to their agreed contract terms and Indian contract law.
               </p>
               <p>
-                KONNEVIA will, upon written request, assist in reviewing communication logs and verifying lead referral parameters to facilitate mutual amicable resolution.
+                Dealsathi will, upon written request, assist in reviewing communication logs and verifying lead referral parameters to facilitate mutual amicable resolution.
               </p>
             </section>
 
@@ -157,7 +157,7 @@ export default function TermsPage() {
                 8. Limitation of Liability
               </h2>
               <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                To the maximum extent permitted by applicable Indian law, KONNEVIA, its founders, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from project delays, property damage, defective execution, provider insolvencies, or customer non-payment resulting from bilateral contracts facilitated through the platform.
+                To the maximum extent permitted by applicable Indian law, Dealsathi, its founders, and affiliates shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from project delays, property damage, defective execution, provider insolvencies, or customer non-payment resulting from bilateral contracts facilitated through the platform.
               </p>
             </section>
 
@@ -167,7 +167,7 @@ export default function TermsPage() {
                 9. Governing Law & Jurisdiction
               </h2>
               <p>
-                These Terms and Conditions shall be governed by, and construed in accordance with, the laws of the Republic of India. Any legal dispute or proceeding arising out of or related to the use of KONNEVIA shall be subject to the exclusive jurisdiction of the competent courts in New Delhi, India.
+                These Terms and Conditions shall be governed by, and construed in accordance with, the laws of the Republic of India. Any legal dispute or proceeding arising out of or related to the use of Dealsathi shall be subject to the exclusive jurisdiction of the competent courts in New Delhi, India.
               </p>
             </section>
 
@@ -178,8 +178,8 @@ export default function TermsPage() {
               </h2>
               <p>
                 For questions regarding these platform terms, please contact our legal and compliance desk at{' '}
-                <a href="mailto:hello@konnevia.in" className="text-accent font-semibold hover:underline">
-                  hello@konnevia.in
+                <a href="mailto:hello@dealsathi.in" className="text-accent font-semibold hover:underline">
+                  hello@dealsathi.in
                 </a>
                 .
               </p>

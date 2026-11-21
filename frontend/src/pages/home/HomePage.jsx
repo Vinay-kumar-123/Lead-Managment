@@ -12,7 +12,7 @@ import {
   Building,
 } from 'lucide-react';
 import { usePageMeta } from '../../hooks/usePageMeta.js';
-import { categories } from '../../data/categories.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import { services } from '../../data/services.js';
 import { providers } from '../../data/providers.js';
 import blogService from '../../services/blogService.js';
@@ -30,11 +30,13 @@ import EmptyState from '../../components/common/EmptyState.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 
 export default function HomePage() {
+  const { categories } = useCategories();
+
   usePageMeta({
     title: 'Find the Right Professionals for Your Needs',
     description:
-      'KONNEVIA connects customers looking for services with verified professionals across Home & Construction, Events, Business, Digital, and Education.',
-    canonical: 'https://konnevia.in/',
+      'Dealsathi connects customers looking for services with verified professionals across Home & Construction, Events, Business, Digital, and Education.',
+    canonical: 'https://dealsathi.in/',
   });
 
   // State for Blog Section (API fetch with graceful offline/dev fallback)
@@ -118,14 +120,14 @@ export default function HomePage() {
           SECTION 2: SEARCH-FIRST HERO
          ========================================================================= */}
       <section
-        className="relative bg-gradient-to-b from-primary via-[#0F233E] to-primary text-white pt-14 pb-16 sm:pt-20 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        className="relative bg-gradient-to-b from-primary-900 via-primary-700 to-primary-800 text-white pt-14 pb-16 sm:pt-20 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden"
         aria-labelledby="hero-headline"
       >
         {/* Subtle geometric background overlay */}
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(#13A89E 1px, transparent 1px), radial-gradient(#ffffff 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(#FF6A03 1px, transparent 1px), radial-gradient(#ffffff 1px, transparent 1px)`,
             backgroundSize: '32px 32px',
             backgroundPosition: '0 0, 16px 16px',
           }}
@@ -134,9 +136,9 @@ export default function HomePage() {
 
         <div className="container-max relative z-10 text-center max-w-4xl mx-auto">
           {/* Working Brand Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-blue-200 text-xs sm:text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4 text-accent" aria-hidden="true" />
-            <span>Pan-India Service Discovery & Verified Advisory</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-blue-100 text-xs sm:text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4 text-accent-400" aria-hidden="true" />
+            <span>Dealsathi • Pan-India Service Discovery & Verified Advisory</span>
           </div>
 
           {/* Hero Headline */}
@@ -367,7 +369,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="pt-4 border-t border-border/60 flex items-center justify-between text-xs text-text-muted">
-                    <span>{article.author || 'KONNEVIA Advisory'}</span>
+                    <span>{article.author?.name || article.author || 'Dealsathi Advisory'}</span>
                     <Link
                       to={`/blog/${article.slug}`}
                       className="font-semibold text-accent hover:underline flex items-center gap-1"
@@ -439,11 +441,11 @@ export default function HomePage() {
           SECTION 10: BECOME A PARTNER CTA
          ========================================================================= */}
       <section
-        className="section-padding bg-primary text-white border-t border-primary-700/60 relative overflow-hidden"
+        className="section-padding bg-primary-900 text-white border-t border-primary-700/60 relative overflow-hidden"
         aria-labelledby="partner-cta-heading"
       >
         <div className="container-max text-center max-w-3xl mx-auto relative z-10">
-          <span className="inline-block text-xs font-bold tracking-wider text-accent uppercase mb-3">
+          <span className="inline-block text-xs font-bold tracking-wider text-accent-400 uppercase mb-3">
             Service Provider Partnership
           </span>
           <h2
@@ -453,7 +455,7 @@ export default function HomePage() {
             Are You a Service Provider?
           </h2>
           <p className="text-blue-100/90 text-sm sm:text-base md:text-lg leading-relaxed mb-8 max-w-2xl mx-auto font-normal">
-            Connect with customers looking for your services. Expand your business with high-intent customer enquiries and verified project introductions across India.
+            Grow your business with Dealsathi. Connect with high-intent customer enquiries and verified project introductions across India.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link to="/become-a-partner" className="w-full sm:w-auto">
@@ -463,7 +465,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link to="/contact" className="w-full sm:w-auto">
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-primary">
+              <Button variant="secondary" size="lg" className="w-full sm:w-auto bg-transparent text-white border-white hover:bg-white hover:text-primary">
                 <span>Talk to Partnerships Desk</span>
               </Button>
             </Link>

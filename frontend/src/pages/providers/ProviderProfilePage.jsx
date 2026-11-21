@@ -42,18 +42,18 @@ export default function ProviderProfilePage() {
 
   usePageMeta({
     title: provider
-      ? `${provider.businessName} — KONNEVIA Partner Profile`
-      : 'Provider Not Found — KONNEVIA',
+      ? `${provider.businessName} — Dealsathi Partner Profile`
+      : 'Provider Not Found — Dealsathi',
     description: provider
       ? provider.metaDescription || provider.description
-      : 'The requested provider profile does not exist in the KONNEVIA directory.',
-    canonical: provider ? `https://konnevia.in/providers/${provider.slug}` : undefined,
+      : 'The requested provider profile does not exist in the Dealsathi directory.',
+    canonical: provider ? `https://dealsathi.in/providers/${provider.slug}` : undefined,
   });
 
   if (isLoading) {
     return (
       <div className="bg-background min-h-[70vh] flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-xs text-text-muted">Loading verified provider profile...</p>
       </div>
     );
@@ -75,7 +75,7 @@ export default function ProviderProfilePage() {
 
   // Safe initials generator for avatar placeholder
   const getInitials = (name) => {
-    if (!name) return 'KP';
+    if (!name) return 'DS';
     return name
       .split(' ')
       .filter(Boolean)
@@ -159,9 +159,9 @@ export default function ProviderProfilePage() {
                   </span>
                   <a
                     href={`tel:${provider.contactNumber}`}
-                    className="w-full py-2.5 px-4 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-2.5 px-4 bg-primary-50 hover:bg-primary-100 text-primary-800 border border-primary-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors"
                   >
-                    <Phone className="w-4 h-4 text-teal-600" />
+                    <Phone className="w-4 h-4 text-accent" />
                     <span>Call {provider.contactNumber}</span>
                   </a>
                 </div>
@@ -281,7 +281,7 @@ export default function ProviderProfilePage() {
               <ul className="space-y-3 text-xs text-text-muted">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>Requirement review by KONNEVIA operations team</span>
+                  <span>Requirement review by Dealsathi operations team</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" aria-hidden="true" />

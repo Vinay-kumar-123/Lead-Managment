@@ -4,7 +4,7 @@ import { usePageMeta } from '../../hooks/usePageMeta.js';
 import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import Alert from '../../components/common/Alert.jsx';
 import leadService from '../../services/leadService.js';
-import { categories } from '../../data/categories.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import {
   Briefcase,
   CheckCircle2,
@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 
 export default function BecomePartnerPage() {
+  const { categories, getCategoryBySlug } = useCategories();
+
   const [formData, setFormData] = useState({
     businessName: '',
     contactPerson: '',
@@ -51,10 +53,10 @@ export default function BecomePartnerPage() {
   const [submitError, setSubmitError] = useState(null);
 
   usePageMeta({
-    title: 'Partner Onboarding — Become a Verified Provider — KONNEVIA',
+    title: 'Partner Onboarding — Become a Verified Provider — Dealsathi',
     description:
-      'Apply to join KONNEVIA as a verified service partner. High-intent customer enquiries with transparent commission terms.',
-    canonical: 'https://konnevia.com/become-a-partner',
+      'Apply to join Dealsathi as a verified service partner. High-intent customer enquiries with transparent commission terms.',
+    canonical: 'https://dealsathi.in/become-a-partner',
   });
 
   const handleChange = (e) => {
@@ -204,7 +206,7 @@ export default function BecomePartnerPage() {
 
       if (response && response.success) {
         setSubmissionSuccess({
-          referenceId: response.data?.referenceId || 'KNV-PTR-CONFIRMED',
+          referenceId: response.data?.referenceId || 'DS-PTR-CONFIRMED',
           message:
             response.message ||
             'Your partner onboarding application and shop profile have been received.',
@@ -228,25 +230,30 @@ export default function BecomePartnerPage() {
   };
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/' },
     { label: 'Partner With Us', href: null },
   ];
 
   return (
     <div className="bg-background min-h-screen pb-16">
+      {/* Top Breadcrumb Bar */}
+      <div className="bg-white border-b border-border/80">
+        <div className="container-max py-3 px-4 sm:px-6 lg:px-8">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
+
       {/* Header Banner */}
-      <section className="bg-primary text-white py-12 md:py-16 border-b border-border">
+      <section className="bg-primary-900 text-white py-12 md:py-16 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Breadcrumb items={breadcrumbItems} className="mb-6 text-slate-300" />
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent mb-4 border border-accent/30">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent-300 mb-4 border border-accent/30">
+              <Sparkles className="w-3.5 h-3.5 text-accent-400" />
               <span>Pan-India Verified Provider Network</span>
             </span>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
-              Scale Your Service Enterprise on KONNEVIA
+              Scale Your Service Enterprise on Dealsathi
             </h1>
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
+            <p className="text-base sm:text-lg text-blue-100/90 leading-relaxed">
               Connect with high-intent clients looking for vetted professionals. Transparent
               performance-based commissions upon verified deal completion.
             </p>
@@ -268,7 +275,7 @@ export default function BecomePartnerPage() {
                   Application Received
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-3">
-                  Welcome to KONNEVIA Onboarding
+                  Welcome to Dealsathi Onboarding
                 </h2>
                 <p className="text-sm text-text-muted max-w-xl mx-auto leading-relaxed mb-6">
                   {submissionSuccess.message}
@@ -423,6 +430,62 @@ export default function BecomePartnerPage() {
                           <p className="mt-1 text-xs text-red-600">{errors.servicesOffered}</p>
                         )}
                       </div>
+
+                      {/* Subcategory Quick-Select Pills for Selected Main Category */}
+                      {formData.category &&
+                        (getCategoryBySlug(formData.category)?.subcategories?.length > 0) && (
+                          <div className="sm:col-span-2 bg-slate-50/80 p-3.5 rounded-xl border border-border/80">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted block mb-2">
+                              Quick-Select Subcategories under{' '}
+                              {getCategoryBySlug(formData.category)?.name}:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {getCategoryBySlug(formData.category)
+                                .subcategories.filter((s) => s.isActive !== false)
+                                .map((sub) => {
+                                  const currentServices = formData.servicesOffered
+                                    .split(',')
+                                    .map((item) => item.trim())
+                                    .filter(Boolean);
+                                  const isSelected = currentServices.some(
+                                    (item) => item.toLowerCase() === sub.name.toLowerCase()
+                                  );
+
+                                  return (
+                                    <button
+                                      key={sub.id || sub.slug}
+                                      type="button"
+                                      onClick={() => {
+                                        const nextServices = isSelected
+                                          ? currentServices.filter(
+                                              (item) => item.toLowerCase() !== sub.name.toLowerCase()
+                                            )
+                                          : [...currentServices, sub.name];
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          servicesOffered: nextServices.join(', '),
+                                        }));
+                                        if (errors.servicesOffered) {
+                                          setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.servicesOffered;
+                                            return next;
+                                          });
+                                        }
+                                      }}
+                                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-primary text-white border-primary'
+                                          : 'bg-white text-text-primary border-border hover:border-accent'
+                                      }`}
+                                    >
+                                      {isSelected ? `✓ ${sub.name}` : `+ ${sub.name}`}
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -805,7 +868,7 @@ export default function BecomePartnerPage() {
                         className="text-xs text-text-primary leading-relaxed cursor-pointer"
                       >
                         <strong>Verification Authorization:</strong> I certify that all details
-                        submitted are accurate and authorize KONNEVIA to review our credentials and
+                        submitted are accurate and authorize Dealsathi to review our credentials and
                         contact us for verification.{' '}
                         <span className="text-red-500">*</span>
                       </label>
@@ -845,25 +908,25 @@ export default function BecomePartnerPage() {
             <div className="bg-white rounded-2xl p-6 border border-border shadow-sm">
               <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Building className="w-4 h-4 text-accent" />
-                <span>Why Partner With KONNEVIA</span>
+                <span>Why Partner With Dealsathi</span>
               </h3>
               <ul className="space-y-3.5 text-xs text-text-muted leading-relaxed">
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                   <span>
                     <strong>Verified Provider Badge:</strong> Stand out to genuine customers looking
                     for audited Indian specialists.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                   <span>
                     <strong>Zero Upfront Fees:</strong> Pay agreed commission only when you
                     successfully win and complete deals.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                   <span>
                     <strong>Admin Verification:</strong> Every business is reviewed to protect the
                     platform from low-quality spam.

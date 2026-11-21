@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import ProviderCard from '../../components/marketplace/ProviderCard.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
 import providerService from '../../services/providerService.js';
-import { categories } from '../../data/categories.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import {
   Search,
   MapPin,
@@ -18,6 +18,7 @@ import {
 
 export default function ProvidersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { categories, getCategoryBySlug } = useCategories();
 
   // State initialized from URL query parameters
   const [searchTerm, setSearchTerm] = useState(
@@ -34,9 +35,9 @@ export default function ProvidersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   usePageMeta({
-    title: 'Find Verified Service Providers — KONNEVIA',
-    description: 'Search and filter vetted service providers, agencies, and professionals across India.',
-    canonical: 'https://konnevia.com/providers',
+    title: 'Find Verified Service Providers — Dealsathi',
+    description: 'Search and filter vetted service providers, agencies, and professionals across India on Dealsathi.',
+    canonical: 'https://dealsathi.in/providers',
   });
 
   // Query providerService when searchParams change
@@ -129,7 +130,7 @@ export default function ProvidersPage() {
         <div className="mb-8 p-4 bg-amber-50/90 border border-amber-200/90 rounded-xl text-xs sm:text-sm text-amber-900 flex items-start gap-3 shadow-xs">
           <ShieldAlert className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div className="leading-relaxed">
-            <strong>Development Environment Notice:</strong> Provider profiles displayed with the "Development Sample" badge are structural prototypes for layout and workflow testing. In accordance with KONNEVIA policy, real commercial providers appear exclusively upon manual KYC verification and written agreement. Zero fake ratings or fabricated reviews are rendered.
+            <strong>Development Environment Notice:</strong> Provider profiles displayed with the "Development Sample" badge are structural prototypes for layout and workflow testing. In accordance with Dealsathi policy, real commercial providers appear exclusively upon manual KYC verification and written agreement. Zero fake ratings or fabricated reviews are rendered.
           </div>
         </div>
 
@@ -215,6 +216,62 @@ export default function ProvidersPage() {
                 </div>
               </div>
             </div>
+
+            {/* Active Subcategory Quick Filter Chips when a Main Category is selected */}
+            {selectedCategory &&
+              (getCategoryBySlug(selectedCategory)?.subcategories?.length > 0) && (
+                <div className="pt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted mr-1">
+                    Subcategories:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      const params = new URLSearchParams(searchParams);
+                      params.set('category', selectedCategory);
+                      params.delete('search');
+                      params.delete('service');
+                      setSearchParams(params);
+                    }}
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
+                      !searchTerm
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-slate-50 text-text-muted border-border hover:border-primary'
+                    }`}
+                  >
+                    All {getCategoryBySlug(selectedCategory)?.name}
+                  </button>
+                  {getCategoryBySlug(selectedCategory)
+                    .subcategories.filter((s) => s.isActive !== false)
+                    .map((sub) => {
+                      const isSubActive =
+                        searchTerm.trim().toLowerCase() === sub.name.toLowerCase();
+                      return (
+                        <button
+                          key={sub.id || sub.slug}
+                          type="button"
+                          onClick={() => {
+                            const nextSearch = isSubActive ? '' : sub.name;
+                            setSearchTerm(nextSearch);
+                            const params = new URLSearchParams();
+                            params.set('category', selectedCategory);
+                            if (nextSearch) params.set('search', nextSearch);
+                            if (locationTerm.trim()) params.set('city', locationTerm.trim());
+                            setSearchParams(params);
+                          }}
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
+                            isSubActive
+                              ? 'bg-accent text-white border-accent'
+                              : 'bg-slate-50 text-text-primary border-border hover:border-accent'
+                          }`}
+                        >
+                          {sub.name}
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
 
             {/* Filter Actions */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/60">

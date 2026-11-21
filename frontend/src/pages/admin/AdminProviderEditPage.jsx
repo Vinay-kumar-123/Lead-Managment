@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import api from '../../services/api.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import {
   Building2,
   Save,
@@ -21,6 +22,7 @@ import {
 export default function AdminProviderEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { categories, getCategoryBySlug } = useCategories();
 
   const [provider, setProvider] = useState(null);
   const [formData, setFormData] = useState({
@@ -324,16 +326,30 @@ export default function AdminProviderEditPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
-                    Category Name *
+                    Main Category *
                   </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
+                  <select
+                    name="categorySlug"
+                    value={formData.categorySlug}
+                    onChange={(e) => {
+                      const chosenSlug = e.target.value;
+                      const foundCat = getCategoryBySlug(chosenSlug);
+                      setFormData((prev) => ({
+                        ...prev,
+                        categorySlug: chosenSlug,
+                        category: foundCat ? foundCat.name : prev.category,
+                      }));
+                    }}
                     required
-                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  />
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+                  >
+                    <option value="">Select Main Category</option>
+                    {categories.map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -353,7 +369,7 @@ export default function AdminProviderEditPage() {
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
-                  Offered Services (Comma-separated)
+                  Offered Services / Subcategories (Comma-separated)
                 </label>
                 <input
                   type="text"
@@ -362,6 +378,46 @@ export default function AdminProviderEditPage() {
                   onChange={handleChange}
                   className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400"
                 />
+                {formData.categorySlug &&
+                  getCategoryBySlug(formData.categorySlug)?.subcategories?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {getCategoryBySlug(formData.categorySlug)
+                        .subcategories.filter((s) => s.isActive !== false)
+                        .map((sub) => {
+                          const currentServices = formData.services
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter(Boolean);
+                          const isSelected = currentServices.some(
+                            (s) => s.toLowerCase() === sub.name.toLowerCase()
+                          );
+                          return (
+                            <button
+                              key={sub.slug}
+                              type="button"
+                              onClick={() => {
+                                const next = isSelected
+                                  ? currentServices.filter(
+                                      (s) => s.toLowerCase() !== sub.name.toLowerCase()
+                                    )
+                                  : [...currentServices, sub.name];
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  services: next.join(', '),
+                                }));
+                              }}
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#012A7A] text-white border-[#012A7A]'
+                                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:border-[#012A7A]'
+                              }`}
+                            >
+                              {isSelected ? `✓ ${sub.name}` : `+ ${sub.name}`}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
               </div>
             </div>
 

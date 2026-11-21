@@ -24,11 +24,11 @@ export default function CategoryCard({ category }) {
         {/* Category Icon Badge */}
         <div
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg flex items-center justify-center mb-5 transition-transform duration-200 group-hover:scale-105"
-          style={{ backgroundColor: category.bgColor || '#E8EDF3' }}
+          style={{ backgroundColor: category.bgColor || '#EEF3FF' }}
         >
           <IconComponent
             className="w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200"
-            style={{ color: category.color || '#142D4E' }}
+            style={{ color: category.color || '#012A7A' }}
             aria-hidden="true"
           />
         </div>
@@ -49,13 +49,13 @@ export default function CategoryCard({ category }) {
             {category.subcategories.slice(0, 3).map((sub) => (
               <span
                 key={sub.id}
-                className="inline-block text-[11px] font-medium text-text-muted bg-slate-100/80 px-2 py-0.5 rounded"
+                className="inline-block text-[11px] font-medium text-text-muted bg-slate-100/90 px-2 py-0.5 rounded"
               >
                 {sub.name}
               </span>
             ))}
             {category.subcategories.length > 3 && (
-              <span className="inline-block text-[11px] font-semibold text-accent bg-accent-50/70 px-1.5 py-0.5 rounded">
+              <span className="inline-block text-[11px] font-semibold text-accent-700 bg-accent-50 px-1.5 py-0.5 rounded border border-accent-100">
                 +{category.subcategories.length - 3} more
               </span>
             )}
@@ -64,7 +64,7 @@ export default function CategoryCard({ category }) {
       </div>
 
       {/* Action Footer */}
-      <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs sm:text-sm font-semibold text-accent group-hover:text-accent-600">
+      <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs sm:text-sm font-semibold text-primary group-hover:text-accent">
         <span>Explore Category</span>
         <ArrowUpRight className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
       </div>

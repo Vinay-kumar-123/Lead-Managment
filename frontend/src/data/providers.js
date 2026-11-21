@@ -25,8 +25,8 @@ export const providers = [
     servicesOffered: ['Residential Interior Design', 'Turnkey 2BHK/3BHK Styling', 'Modular Kitchens', '3D Visual Walkthroughs'],
     portfolio: [],
     website: null,
-    metaTitle: 'Studio ArchForm Design (Sample Listing) — KONNEVIA',
-    metaDescription: 'Development sample provider listing on KONNEVIA for layout testing.',
+    metaTitle: 'Studio ArchForm Design (Sample Listing) — Dealsathi',
+    metaDescription: 'Development sample provider listing on Dealsathi for layout testing.',
   },
   {
     id: 'dev-provider-002',
@@ -48,8 +48,8 @@ export const providers = [
     servicesOffered: ['Destination Wedding Planning', 'Theme Conceptualization', 'Floral Stage Decor', 'Artist Management'],
     portfolio: [],
     website: null,
-    metaTitle: 'Verve Event Curators (Sample Listing) — KONNEVIA',
-    metaDescription: 'Development sample provider listing on KONNEVIA for layout testing.',
+    metaTitle: 'Verve Event Curators (Sample Listing) — Dealsathi',
+    metaDescription: 'Development sample provider listing on Dealsathi for layout testing.',
   },
   {
     id: 'dev-provider-003',
@@ -71,8 +71,8 @@ export const providers = [
     servicesOffered: ['React & Node.js Web Apps', 'Shopify E-commerce', 'Corporate Websites', 'Cloud Architecture'],
     portfolio: [],
     website: null,
-    metaTitle: 'Apex Pixel Labs (Sample Listing) — KONNEVIA',
-    metaDescription: 'Development sample provider listing on KONNEVIA for layout testing.',
+    metaTitle: 'Apex Pixel Labs (Sample Listing) — Dealsathi',
+    metaDescription: 'Development sample provider listing on Dealsathi for layout testing.',
   },
 ];
 

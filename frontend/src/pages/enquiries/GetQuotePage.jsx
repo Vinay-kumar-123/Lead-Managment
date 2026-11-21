@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import Alert from '../../components/common/Alert.jsx';
 import Button from '../../components/common/Button.jsx';
 import leadService from '../../services/leadService.js';
-import { categories } from '../../data/categories.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import { services } from '../../data/services.js';
 import {
   ShieldCheck,
@@ -21,6 +21,7 @@ import {
 
 export default function GetQuotePage() {
   const [searchParams] = useSearchParams();
+  const { categories, getCategoryBySlug } = useCategories();
 
   // Prefill params from discovery pages
   const paramService = searchParams.get('service') || '';
@@ -50,9 +51,9 @@ export default function GetQuotePage() {
   const [submitError, setSubmitError] = useState(null);
 
   usePageMeta({
-    title: 'Get a Service Quote — KONNEVIA Verified Matching',
-    description: 'Submit your service requirements across Home, Events, Business, Digital, or Education. Verified matching with transparent privacy controls.',
-    canonical: 'https://konnevia.com/get-quote',
+    title: 'Get a Service Quote — Dealsathi Verified Matching',
+    description: 'Submit your service requirements across Home, Events, Business, Digital, or Education on Dealsathi. Verified matching with transparent privacy controls.',
+    canonical: 'https://dealsathi.in/get-quote',
   });
 
   // Automatically update category if service is selected from seed data
@@ -157,7 +158,7 @@ export default function GetQuotePage() {
 
       if (response && response.success) {
         setSubmissionSuccess({
-          referenceId: response.data?.referenceId || 'KNV-ENQ-CONFIRMED',
+          referenceId: response.data?.referenceId || 'DS-ENQ-CONFIRMED',
           message: response.message || 'Your service enquiry has been successfully logged.',
         });
       } else {
@@ -222,14 +223,14 @@ export default function GetQuotePage() {
 
           {/* Targeted Provider Note if arriving from profile */}
           {paramProvider && (
-            <div className="mb-8 p-4 bg-teal-50/70 border border-teal-200 rounded-xl text-xs sm:text-sm text-teal-900 flex items-center justify-between gap-4">
+            <div className="mb-8 p-4 bg-primary-50 border border-primary-200 rounded-xl text-xs sm:text-sm text-primary-900 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
                 <span>
                   Enquiry directed for provider: <strong>{paramProvider}</strong>
                 </span>
               </div>
-              <span className="text-[11px] font-semibold bg-white/80 px-2 py-0.5 rounded text-accent">
+              <span className="text-[11px] font-semibold bg-white/90 px-2 py-0.5 rounded text-primary">
                 Prefilled Scope
               </span>
             </div>
@@ -238,7 +239,7 @@ export default function GetQuotePage() {
           {/* Submission Success State */}
           {submissionSuccess ? (
             <div className="bg-white rounded-2xl border border-border/80 p-8 sm:p-12 text-center shadow-xs animate-fadeIn">
-              <div className="w-16 h-16 rounded-full bg-teal-50 text-accent flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 border border-emerald-100">
                 <CheckCircle2 className="w-8 h-8" aria-hidden="true" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-3">
@@ -356,6 +357,47 @@ export default function GetQuotePage() {
                         <p className="mt-1 text-xs text-red-600">{errors.service}</p>
                       )}
                     </div>
+
+                    {/* Subcategory Quick-Select Pills for Chosen Vertical */}
+                    {formData.category &&
+                      (getCategoryBySlug(formData.category)?.subcategories?.length > 0) && (
+                        <div className="sm:col-span-2 bg-slate-50/80 p-3.5 rounded-xl border border-border/80">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted block mb-2">
+                            Available Subcategories in {getCategoryBySlug(formData.category)?.name}:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {getCategoryBySlug(formData.category)
+                              .subcategories.filter((s) => s.isActive !== false)
+                              .map((sub) => {
+                                const isChosen =
+                                  formData.service.trim().toLowerCase() === sub.name.toLowerCase();
+                                return (
+                                  <button
+                                    key={sub.id || sub.slug}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData((prev) => ({ ...prev, service: sub.name }));
+                                      if (errors.service) {
+                                        setErrors((prev) => {
+                                          const next = { ...prev };
+                                          delete next.service;
+                                          return next;
+                                        });
+                                      }
+                                    }}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                                      isChosen
+                                        ? 'bg-primary text-white border-primary'
+                                        : 'bg-white text-text-primary border-border hover:border-accent'
+                                    }`}
+                                  >
+                                    {sub.name}
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 </div>
 
@@ -605,7 +647,7 @@ export default function GetQuotePage() {
                       className="w-4 h-4 text-accent border-border rounded mt-1 cursor-pointer focus:ring-accent"
                     />
                     <label htmlFor="consentToContact" className="text-xs text-text-primary leading-relaxed cursor-pointer">
-                      <strong>Direct Contact Authorization:</strong> I authorize KONNEVIA’s marketplace operations team to contact me via phone/SMS/email regarding this service request. <span className="text-red-500">*</span>
+                      <strong>Direct Contact Authorization:</strong> I authorize Dealsathi’s marketplace operations team to contact me via phone/SMS/email regarding this service request. <span className="text-red-500">*</span>
                     </label>
                   </div>
                   {errors.consentToContact && (

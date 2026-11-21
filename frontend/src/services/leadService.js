@@ -3,7 +3,7 @@ import api from './api.js';
 /**
  * Lead Service Layer
  * Captures customer enquiries and partner onboarding submissions via backend Express API.
- * Managed directly through the KONNEVIA operational Admin Panel.
+ * Managed directly through the Dealsathi operational Admin Panel.
  */
 export const leadService = {
   async submitEnquiry(payload) {

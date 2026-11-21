@@ -1,4 +1,4 @@
-# KONNEVIA Deployment Guide
+# Dealsathi Deployment Guide
 
 This guide details how to deploy the frontend and backend applications to independent hosting providers.
 

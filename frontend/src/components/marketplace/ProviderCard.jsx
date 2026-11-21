@@ -6,7 +6,7 @@ import Badge from '../common/Badge.jsx';
 export default function ProviderCard({ provider }) {
   // Safe initials generator for avatar placeholder
   const getInitials = (name) => {
-    if (!name) return 'KP';
+    if (!name) return 'DS';
     return name
       .split(' ')
       .filter(Boolean)
@@ -34,7 +34,7 @@ export default function ProviderCard({ provider }) {
               </h3>
               <p className="text-xs text-text-muted flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3.5 h-3.5 text-accent flex-shrink-0" aria-hidden="true" />
-                <span className="truncate">{provider.location}</span>
+                <span className="truncate">{provider.location || provider.city}</span>
               </p>
             </div>
           </div>
@@ -42,7 +42,7 @@ export default function ProviderCard({ provider }) {
 
         {/* Labels: Primary Service + Dev Sample Indicator */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Badge variant="teal">{provider.mainService}</Badge>
+          <Badge variant="navy">{provider.mainService || provider.category}</Badge>
 
           {provider.isDevSample && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
@@ -51,7 +51,7 @@ export default function ProviderCard({ provider }) {
             </span>
           )}
 
-          {provider.verificationStatus === 'verified' && (
+          {(provider.verificationStatus === 'verified' || provider.verificationStatus === 'VERIFIED') && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
               <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
               <span>Manually Verified</span>
@@ -65,16 +65,17 @@ export default function ProviderCard({ provider }) {
         </p>
 
         {/* Services / Tags Offered */}
-        {provider.servicesOffered && provider.servicesOffered.length > 0 && (
+        {((provider.servicesOffered && provider.servicesOffered.length > 0) ||
+          (provider.services && provider.services.length > 0)) && (
           <div className="mb-4">
             <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider block mb-1.5">
               Services Offered:
             </span>
             <div className="flex flex-wrap gap-1">
-              {provider.servicesOffered.slice(0, 3).map((item, idx) => (
+              {(provider.servicesOffered || provider.services).slice(0, 3).map((item, idx) => (
                 <span
                   key={idx}
-                  className="text-[11px] font-medium text-text-primary/80 bg-slate-100 px-2 py-0.5 rounded"
+                  className="text-[11px] font-medium text-text-primary/85 bg-slate-100 px-2 py-0.5 rounded"
                 >
                   {item}
                 </span>
@@ -89,11 +90,11 @@ export default function ProviderCard({ provider }) {
         {provider.contactNumber ? (
           <a
             href={`tel:${provider.contactNumber}`}
-            className="inline-flex items-center gap-1 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-2 py-1 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200/80 px-2.5 py-1 rounded-lg transition-colors"
             title={`Call ${provider.businessName}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <Phone className="w-3 h-3 text-teal-600" />
+            <Phone className="w-3 h-3 text-accent" />
             <span className="font-mono">{provider.contactNumber}</span>
           </a>
         ) : (
@@ -118,7 +119,7 @@ export default function ProviderCard({ provider }) {
 
           <Link
             to={`/get-quote?service=${encodeURIComponent(provider.mainService || provider.category || '')}&provider=${encodeURIComponent(provider.businessName)}`}
-            className="btn-primary text-xs py-1 px-3"
+            className="btn-primary text-xs py-1.5 px-3.5"
           >
             Request Quote
           </Link>

@@ -63,7 +63,7 @@ export default function AdminActivityLogsPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         {isLoading ? (
           <div className="p-16 text-center">
-            <div className="w-8 h-8 border-3 border-[#13A89E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-3 border-[#FF6A03] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-xs text-slate-500">Loading audit records from database...</p>
           </div>
         ) : logs.length === 0 ? (

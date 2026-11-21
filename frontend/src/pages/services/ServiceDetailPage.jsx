@@ -39,11 +39,11 @@ export default function ServiceDetailPage() {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   usePageMeta({
-    title: service ? `${service.name} Services — KONNEVIA` : 'Service Not Found — KONNEVIA',
+    title: service ? `${service.name} Services — Dealsathi` : 'Service Not Found — Dealsathi',
     description: service
       ? service.metaDescription || service.description
-      : 'The requested service does not exist in the KONNEVIA catalog.',
-    canonical: service ? `https://konnevia.com/services/${service.slug}` : undefined,
+      : 'The requested service does not exist in the Dealsathi catalog.',
+    canonical: service ? `https://dealsathi.in/services/${service.slug}` : undefined,
   });
 
   if (!service) {
@@ -177,7 +177,7 @@ export default function ServiceDetailPage() {
         {service.benefits && service.benefits.length > 0 && (
           <section aria-labelledby="benefits-heading" className="bg-white p-6 sm:p-8 rounded-2xl border border-border/80 shadow-xs">
             <h2 id="benefits-heading" className="text-xl sm:text-2xl font-bold text-primary mb-2">
-              Why Book {service.name} via KONNEVIA
+              Why Book {service.name} via Dealsathi
             </h2>
             <p className="text-text-muted text-sm mb-6">
               Our human-assisted curation process ensures project accountability.

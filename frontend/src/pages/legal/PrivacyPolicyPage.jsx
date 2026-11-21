@@ -17,9 +17,9 @@ import {
 
 export default function PrivacyPolicyPage() {
   usePageMeta({
-    title: 'Privacy Policy — KONNEVIA Data Governance & Protection Protocols',
-    description: 'Read the KONNEVIA Privacy Policy detailing our information collection practices, customer consent management, vetted provider data sharing, and DPDP governance.',
-    canonical: 'https://konnevia.in/privacy-policy',
+    title: 'Privacy Policy — Dealsathi Data Governance & Protection Protocols',
+    description: 'Read the Dealsathi Privacy Policy detailing our information collection practices, customer consent management, vetted provider data sharing, and DPDP governance.',
+    canonical: 'https://dealsathi.in/privacy-policy',
   });
 
   return (
@@ -40,7 +40,7 @@ export default function PrivacyPolicyPage() {
               <span className="text-xs font-semibold text-text-muted">VERSION 2026.1</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight mb-3">
-              KONNEVIA Privacy Policy
+              Dealsathi Privacy Policy
             </h1>
             <p className="text-xs sm:text-sm text-text-muted">
               Effective Date: January 1, 2026 · Last Updated: November 12, 2026
@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
               <strong className="font-bold block text-amber-950 mb-0.5">
                 NOTICE: DRAFT POLICY SUBJECT TO FORMAL LEGAL COUNSEL REVIEW
               </strong>
-              This privacy governance policy outlines the factual technical and operational data practices implemented by the KONNEVIA marketplace architecture. It is published as a draft standard and requires final review by qualified Indian legal counsel prior to formal commercial operations under the Digital Personal Data Protection (DPDP) Act, 2023.
+              This privacy governance policy outlines the factual technical and operational data practices implemented by the Dealsathi marketplace architecture. It is published as a draft standard and requires final review by qualified Indian legal counsel prior to formal commercial operations under the Digital Personal Data Protection (DPDP) Act, 2023.
             </div>
           </div>
 
@@ -66,10 +66,10 @@ export default function PrivacyPolicyPage() {
                 <span>1. Introduction & Operational Scope</span>
               </h2>
               <p>
-                KONNEVIA (&quot;we,&quot; &quot;our,&quot; or &quot;the Platform&quot;) operates as a Pan-India multi-category service discovery and lead facilitation marketplace. This Privacy Policy governs the collection, storage, processing, and transmission of personal and business information provided by users, including individuals requesting service quotes (&quot;Customers&quot;), independent contractors or firms applying to join the network (&quot;Partners&quot; or &quot;Providers&quot;), and general visitors.
+                Dealsathi (&quot;we,&quot; &quot;our,&quot; or &quot;the Platform&quot;) operates as a Pan-India multi-category service discovery and lead facilitation marketplace. This Privacy Policy governs the collection, storage, processing, and transmission of personal and business information provided by users, including individuals requesting service quotes (&quot;Customers&quot;), independent contractors or firms applying to join the network (&quot;Partners&quot; or &quot;Providers&quot;), and general visitors.
               </p>
               <p>
-                By accessing KONNEVIA, submitting a quote request, applying as a service partner, or delivering a communication desk message, you acknowledge the data handling practices described in this document.
+                By accessing Dealsathi, submitting a quote request, applying as a service partner, or delivering a communication desk message, you acknowledge the data handling practices described in this document.
               </p>
             </section>
 
@@ -108,7 +108,7 @@ export default function PrivacyPolicyPage() {
                 <li>Matching customer requirements with relevant, vetted service professionals.</li>
                 <li>Transmitting verified quote parameters to selected partners following customer consent.</li>
                 <li>Conducting verification of partner trade credentials, portfolios, and operating locations.</li>
-                <li>Responding to user inquiries delivered to the KONNEVIA communication desk.</li>
+                <li>Responding to user inquiries delivered to the Dealsathi communication desk.</li>
                 <li>Detecting automated abuse, rate-limit violations, and malicious submissions.</li>
               </ul>
             </section>
@@ -147,8 +147,8 @@ export default function PrivacyPolicyPage() {
               </p>
               <p>
                 Users maintain the right to withdraw consent, request disclosure of collected personal information, or request permanent deletion of their lead record from our databases, subject to applicable statutory retention obligations. To exercise these rights, submit a written request to{' '}
-                <a href="mailto:grievance@konnevia.in" className="text-accent font-semibold hover:underline">
-                  grievance@konnevia.in
+                <a href="mailto:grievance@dealsathi.in" className="text-accent font-semibold hover:underline">
+                  grievance@dealsathi.in
                 </a>
                 .
               </p>
@@ -160,7 +160,7 @@ export default function PrivacyPolicyPage() {
                 6. Cookies, Tracking & Local Storage
               </h2>
               <p>
-                KONNEVIA uses minimal, privacy-respecting client technologies. We do not use third-party behavioral surveillance cookies or invasive fingerprinting scripts. Essential local storage is used solely to maintain user interface preferences and session continuity.
+                Dealsathi uses minimal, privacy-respecting client technologies. We do not use third-party behavioral surveillance cookies or invasive fingerprinting scripts. Essential local storage is used solely to maintain user interface preferences and session continuity.
               </p>
             </section>
 
@@ -207,10 +207,10 @@ export default function PrivacyPolicyPage() {
                 In accordance with the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023, the details of our Grievance Officer are published below:
               </p>
               <div className="bg-slate-50 p-5 rounded-2xl border border-border/80 text-xs sm:text-sm space-y-1 font-mono">
-                <p className="font-bold text-primary">KONNEVIA Privacy & Grievance Desk</p>
+                <p className="font-bold text-primary">Dealsathi Privacy & Grievance Desk</p>
                 <p className="text-text-muted">Attention: Grievance Redressal Officer</p>
-                <p className="text-text-muted">Email: grievance@konnevia.in</p>
-                <p className="text-text-muted">General Communication: hello@konnevia.in</p>
+                <p className="text-text-muted">Email: grievance@dealsathi.in</p>
+                <p className="text-text-muted">General Communication: hello@dealsathi.in</p>
                 <p className="text-text-muted">Jurisdiction: New Delhi, India</p>
               </div>
             </section>

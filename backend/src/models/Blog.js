@@ -41,7 +41,7 @@ const blogSchema = new mongoose.Schema(
       },
     ],
     author: {
-      name: { type: String, default: 'KONNEVIA Editorial Team' },
+      name: { type: String, default: 'Dealsathi Editorial Team' },
       role: { type: String, default: 'Editorial Specialist' },
     },
     status: {

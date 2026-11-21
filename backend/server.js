@@ -2,6 +2,7 @@ import app from './src/app.js';
 import env from './src/config/env.js';
 import connectDB from './src/config/db.js';
 import authService from './src/services/authService.js';
+import categoryService from './src/services/categoryService.js';
 import logger from './src/utils/logger.js';
 
 let server;
@@ -10,12 +11,13 @@ const startServer = async () => {
   // Connect to MongoDB Atlas
   const conn = await connectDB();
 
-  // If DB connected, ensure initial Super Admin is safely bootstrapped
+  // If DB connected, ensure initial Super Admin and 5 Canonical Categories are safely bootstrapped
   if (conn) {
     try {
       await authService.bootstrapAdmin();
+      await categoryService.ensureCanonicalCategories();
     } catch (bootstrapErr) {
-      logger.warn(`Admin bootstrap notice: ${bootstrapErr.message}`);
+      logger.warn(`Startup bootstrap notice: ${bootstrapErr.message}`);
     }
   }
 

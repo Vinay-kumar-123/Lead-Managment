@@ -1,12 +1,12 @@
-# KONNEVIA — Multi-Service Marketplace Platform
+# Dealsathi — Multi-Service Marketplace Platform
 
-KONNEVIA is a pan-India service marketplace connecting consumers and businesses with verified professionals across Home & Living, Events & Hospitality, Business & Legal, Digital Services, and Education & Coaching.
+Dealsathi is a pan-India service marketplace connecting consumers and businesses with verified professionals across Home & Living, Events & Hospitality, Business & Legal, Digital Services, and Education & Coaching.
 
 ---
 
 ## Production repository guide
 
-**Discover. Connect. Get Things Done.** KONNEVIA helps customers discover service providers, request quotes, and connect with businesses through one marketplace.
+**Discover. Connect. Get Things Done.** Dealsathi helps customers discover service providers, request quotes, and connect with businesses through one marketplace.
 
 ### Implemented features
 

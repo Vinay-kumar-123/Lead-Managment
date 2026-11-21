@@ -1,4 +1,4 @@
-# KONNEVIA Environment Variables Specification
+# Dealsathi Environment Variables Specification
 **Document Version**: 2.0 (Production Release)  
 **Security Level**: Confidential Configuration Template  
 

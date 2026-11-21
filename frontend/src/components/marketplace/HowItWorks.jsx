@@ -30,7 +30,7 @@ export function HowItWorksSection() {
         <SectionHeading
           id="hiw-title"
           tag="Simple & Controlled Workflow"
-          title="How KONNEVIA Works"
+          title="How Dealsathi Works"
           subtitle="A disciplined, human-assisted process connecting customers with verified professionals without algorithmic guesswork."
           align="center"
         />
@@ -48,7 +48,7 @@ export function HowItWorksSection() {
                   <span className="text-2xl font-black text-accent tracking-tight">
                     {item.step}
                   </span>
-                  <div className="w-12 h-12 rounded-lg bg-accent-50 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-colors duration-200">
+                  <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary group-hover:bg-accent group-hover:text-white transition-colors duration-200">
                     <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
                 </div>
@@ -62,7 +62,7 @@ export function HowItWorksSection() {
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-border/40 text-[11px] font-semibold text-text-muted/80 flex items-center gap-1.5">
+                <div className="mt-6 pt-4 border-t border-border/40 text-[11px] font-semibold text-text-muted/90 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-accent" aria-hidden="true" />
                   <span>Manual review at every step</span>
                 </div>
@@ -105,7 +105,7 @@ export function TrustSection() {
         <SectionHeading
           id="trust-title"
           tag="Integrity & Transparency"
-          title="Why Customers & Providers Trust KONNEVIA"
+          title="Why Customers & Providers Trust Dealsathi"
           subtitle="Built on high-touch quality assurance and consent-first data governance, not lead spam directories."
           align="center"
         />
@@ -116,9 +116,9 @@ export function TrustSection() {
             return (
               <div
                 key={index}
-                className="p-6 rounded-lg bg-background border border-border/80 flex flex-col justify-start"
+                className="p-6 rounded-lg bg-background border border-border/80 flex flex-col justify-start hover:border-primary-200 transition-colors"
               >
-                <div className="w-11 h-11 rounded-md bg-accent-50 text-accent flex items-center justify-center mb-4">
+                <div className="w-11 h-11 rounded-md bg-accent-50 text-accent flex items-center justify-center mb-4 border border-accent-100">
                   <Icon className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <h3 className="text-base font-bold text-primary mb-2">

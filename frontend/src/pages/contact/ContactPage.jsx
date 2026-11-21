@@ -30,9 +30,9 @@ const SUBJECT_OPTIONS = [
 
 export default function ContactPage() {
   usePageMeta({
-    title: 'Contact Us — KONNEVIA Communication & Support Desk',
-    description: 'Get in touch with the KONNEVIA marketplace team for customer enquiries, partner verification assistance, and general platform support.',
-    canonical: 'https://konnevia.in/contact',
+    title: 'Contact Us — Dealsathi Communication & Support Desk',
+    description: 'Get in touch with the Dealsathi marketplace team for customer enquiries, partner verification assistance, and general platform support.',
+    canonical: 'https://dealsathi.in/contact',
   });
 
   const [formData, setFormData] = useState({
@@ -141,7 +141,7 @@ export default function ContactPage() {
         <div className="max-w-2xl mb-12">
           <Badge variant="teal">Communication Desk</Badge>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-tight mt-3 mb-4">
-            Connect With the KONNEVIA Team
+            Connect With the Dealsathi Team
           </h1>
           <p className="text-sm sm:text-base text-text-muted leading-relaxed">
             Have a question regarding service discovery, vendor onboarding, or marketplace compliance? Reach out to our operations team below.
@@ -165,10 +165,10 @@ export default function ContactPage() {
                     General Inquiries & Support
                   </span>
                   <a
-                    href="mailto:hello@konnevia.in"
+                    href="mailto:hello@dealsathi.in"
                     className="text-sm font-semibold text-primary hover:text-accent transition-colors"
                   >
-                    hello@konnevia.in
+                    hello@dealsathi.in
                   </a>
                   <p className="text-[11px] text-text-muted mt-0.5">Standard response window: 24–48 business hours</p>
                 </div>
@@ -183,10 +183,10 @@ export default function ContactPage() {
                     Grievance & Privacy Officer
                   </span>
                   <a
-                    href="mailto:grievance@konnevia.in"
+                    href="mailto:grievance@dealsathi.in"
                     className="text-sm font-semibold text-primary hover:text-accent transition-colors"
                   >
-                    grievance@konnevia.in
+                    grievance@dealsathi.in
                   </a>
                   <p className="text-[11px] text-text-muted mt-0.5">Statutory data governance and grievance redressal</p>
                 </div>
@@ -410,7 +410,7 @@ export default function ContactPage() {
                         className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
                       />
                       <span className="text-xs text-text-muted leading-relaxed">
-                        I confirm that the details provided are accurate and authorize KONNEVIA’s communication desk to contact me via email or phone regarding this inquiry in accordance with the{' '}
+                        I confirm that the details provided are accurate and authorize Dealsathi’s communication desk to contact me via email or phone regarding this inquiry in accordance with the{' '}
                         <Link to="/privacy-policy" className="text-accent hover:underline font-semibold" target="_blank">
                           Privacy Policy
                         </Link>

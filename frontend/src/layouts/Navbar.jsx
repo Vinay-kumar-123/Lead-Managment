@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ArrowRight } from 'lucide-react';
+import BrandLogo from '../components/common/BrandLogo.jsx';
 
 const navLinks = [
   { label: 'Categories', href: '/categories' },
@@ -52,32 +53,10 @@ export default function Navbar() {
           {/* Logo & Brand Identity */}
           <Link
             to="/"
-            className="flex items-center gap-3 flex-shrink-0 group focus-visible:ring-accent"
-            aria-label="KONNEVIA Home"
+            className="flex items-center gap-3 flex-shrink-0 group focus-visible:ring-accent rounded-sm"
+            aria-label="Dealsathi Home"
           >
-            {/* High-fidelity Brand SVG matching provided Logo concept */}
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-md bg-primary flex items-center justify-center p-1.5 shadow-sm group-hover:shadow transition-shadow">
-              <svg viewBox="0 0 40 40" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                {/* Column */}
-                <rect x="7" y="6" width="6" height="28" rx="2" fill="#FFFFFF" />
-                {/* Pathway Chevron */}
-                <path d="M13 22 L24 9 H31 L20 22 L32 34 H25 L13 22 Z" fill="#13A89E" />
-                {/* 4-Square Grid Motif */}
-                <rect x="15" y="27" width="2.5" height="2.5" rx="0.5" fill="#FFFFFF" />
-                <rect x="19" y="27" width="2.5" height="2.5" rx="0.5" fill="#FFFFFF" />
-                <rect x="15" y="31" width="2.5" height="2.5" rx="0.5" fill="#FFFFFF" />
-                <rect x="19" y="31" width="2.5" height="2.5" rx="0.5" fill="#FFFFFF" />
-              </svg>
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black text-primary tracking-tight leading-none">
-                KONNEVIA
-              </span>
-              <span className="text-[9px] sm:text-[10px] text-text-muted font-medium tracking-normal mt-0.5 hidden xs:block">
-                Discover. Connect. Get Things Done.
-              </span>
-            </div>
+            <BrandLogo variant="header" showWordmark={true} showTagline={true} />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -89,8 +68,8 @@ export default function Navbar() {
                   className={({ isActive }) =>
                     `px-3.5 py-2 rounded-sm text-sm font-semibold transition-colors duration-150 ${
                       isActive
-                        ? 'text-accent bg-accent-50/80'
-                        : 'text-text-primary hover:text-accent hover:bg-slate-50'
+                        ? 'text-accent-600 bg-accent-50'
+                        : 'text-text-primary hover:text-primary hover:bg-primary-50/70'
                     }`
                   }
                 >
@@ -104,7 +83,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               to="/become-a-partner"
-              className="text-sm font-semibold text-text-muted hover:text-primary px-3 py-2 transition-colors"
+              className="text-sm font-semibold text-primary hover:text-accent px-3 py-2 rounded-sm hover:bg-slate-50 transition-colors"
             >
               Become a Partner
             </Link>
@@ -148,7 +127,7 @@ export default function Navbar() {
         >
           <div className="space-y-1">
             <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 px-3">
-              Explore Marketplace
+              Explore Dealsathi
             </p>
             {navLinks.map((link) => (
               <NavLink
@@ -157,7 +136,7 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   `block px-3.5 py-3 rounded-sm text-base font-semibold transition-colors ${
                     isActive
-                      ? 'text-accent bg-accent-50'
+                      ? 'text-accent-600 bg-accent-50'
                       : 'text-text-primary hover:bg-slate-50'
                   }`
                 }
@@ -181,7 +160,7 @@ export default function Navbar() {
               Get a Free Quote
             </Link>
             <p className="text-center text-xs text-text-muted pt-2">
-              Pan-India Service Discovery & Verified Advisory
+              Dealsathi • Pan-India Service Discovery & Verified Advisory
             </p>
           </div>
         </div>

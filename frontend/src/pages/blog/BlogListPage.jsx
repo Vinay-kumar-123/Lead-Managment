@@ -32,11 +32,12 @@ export default function BlogListPage() {
   const [error, setError] = useState(null);
 
   const [searchInput, setSearchInput] = useState(currentSearch);
+  const normalizeBrandText = (str) => (str ? String(str).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : str);
 
   usePageMeta({
-    title: 'Marketplace Guides, Insights & Hiring Advice — KONNEVIA',
-    description: 'Expert guides, line-item budgeting advice, and hiring checklists across Home & Construction, Events, Business, and Digital Services.',
-    canonical: 'https://konnevia.com/blog',
+    title: 'Marketplace Guides, Insights & Hiring Advice — Dealsathi',
+    description: 'Expert guides, line-item budgeting advice, and hiring checklists across Home & Construction, Events, Business, and Digital Services on Dealsathi.',
+    canonical: 'https://dealsathi.in/blog',
   });
 
   // Fetch categories once on mount
@@ -266,7 +267,7 @@ export default function BlogListPage() {
 
                     <div>
                       <div className="flex items-center gap-4 text-xs text-text-muted mb-6">
-                        <span>By {featuredArticle.author?.name || 'KONNEVIA Staff'}</span>
+                        <span>By {normalizeBrandText(featuredArticle.author?.name || 'Dealsathi Staff')}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-accent" />
@@ -348,7 +349,7 @@ export default function BlogListPage() {
 
                     <div className="pt-4 border-t border-border/60 flex items-center justify-between">
                       <span className="text-xs text-text-muted">
-                        {article.author?.name || 'Editorial Team'}
+                        {normalizeBrandText(article.author?.name || 'Editorial Team')}
                       </span>
                       <Link
                         to={`/blog/${article.slug}`}

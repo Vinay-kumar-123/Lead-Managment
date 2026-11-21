@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
     return (
       <AdminLayout title="Overview Dashboard" subtitle="Real-time operational marketplace metrics">
         <div className="py-20 flex flex-col items-center justify-center">
-          <div className="w-8 h-8 border-3 border-[#13A89E] border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="w-8 h-8 border-3 border-[#FF6A03] border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-xs text-slate-500 font-medium">Querying live MongoDB records...</p>
         </div>
       </AdminLayout>
@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
       {/* Quick Operational Actions Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs mb-8 flex flex-wrap items-center justify-between gap-3">
         <div className="text-xs">
-          <span className="font-bold text-[#142D4E] block">Quick Operational Desk</span>
+          <span className="font-bold text-[#012A7A] block">Quick Operational Desk</span>
           <span className="text-[#64748B]">Immediate actions requiring administrator attention</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -112,12 +112,12 @@ export default function AdminDashboardPage() {
               <FileText className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#142D4E] mb-1">
+          <div className="text-3xl font-black text-[#012A7A] mb-1">
             {stats?.enquiries?.total ?? 0}
           </div>
           <Link
             to="/admin/enquiries"
-            className="text-xs font-semibold text-[#13A89E] hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#FF6A03] hover:underline flex items-center gap-1"
           >
             <span>
               Manage Enquiries ({stats?.enquiries?.new ?? 0} new)
@@ -136,12 +136,12 @@ export default function AdminDashboardPage() {
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#142D4E] mb-1">
+          <div className="text-3xl font-black text-[#012A7A] mb-1">
             {stats?.applications?.total ?? 0}
           </div>
           <Link
             to="/admin/applications"
-            className="text-xs font-semibold text-[#13A89E] hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#FF6A03] hover:underline flex items-center gap-1"
           >
             <span>
               Review Desk ({stats?.applications?.pending ?? 0} pending)
@@ -160,12 +160,12 @@ export default function AdminDashboardPage() {
               <Building2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#142D4E] mb-1">
+          <div className="text-3xl font-black text-[#012A7A] mb-1">
             {stats?.providers?.published ?? 0}
           </div>
           <Link
             to="/admin/providers"
-            className="text-xs font-semibold text-[#13A89E] hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#FF6A03] hover:underline flex items-center gap-1"
           >
             <span>
               Profiles ({stats?.providers?.draft ?? 0} draft)
@@ -184,12 +184,12 @@ export default function AdminDashboardPage() {
               <BookOpen className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black text-[#142D4E] mb-1">
+          <div className="text-3xl font-black text-[#012A7A] mb-1">
             {stats?.blogs?.published ?? 0}
           </div>
           <Link
             to="/admin/blogs"
-            className="text-xs font-semibold text-[#13A89E] hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#FF6A03] hover:underline flex items-center gap-1"
           >
             <span>
               Articles ({stats?.blogs?.draft ?? 0} draft)
@@ -204,12 +204,12 @@ export default function AdminDashboardPage() {
         {/* Recent Partner Applications (6 cols) */}
         <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-bold text-[#142D4E] uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-[#012A7A] uppercase tracking-wider">
               Recent Partner Applications
             </h2>
             <Link
               to="/admin/applications"
-              className="text-xs font-semibold text-[#13A89E] hover:underline"
+              className="text-xs font-semibold text-[#FF6A03] hover:underline"
             >
               View All
             </Link>
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
                     </h3>
                     <p className="text-[11px] text-slate-500 truncate">
                       {app.contactPerson} · {app.city} ·{' '}
-                      <span className="font-mono text-[10px] text-[#13A89E]">
+                      <span className="font-mono text-[10px] text-[#FF6A03]">
                         {app.referenceId}
                       </span>
                     </p>
@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <Link
                       to={`/admin/applications/${app._id}`}
-                      className="text-xs font-semibold text-[#13A89E] hover:underline"
+                      className="text-xs font-semibold text-[#FF6A03] hover:underline"
                     >
                       Review
                     </Link>
@@ -262,12 +262,12 @@ export default function AdminDashboardPage() {
         {/* Recent Customer Enquiries (6 cols) */}
         <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-bold text-[#142D4E] uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-[#012A7A] uppercase tracking-wider">
               Recent Customer Leads
             </h2>
             <Link
               to="/admin/enquiries"
-              className="text-xs font-semibold text-[#13A89E] hover:underline"
+              className="text-xs font-semibold text-[#FF6A03] hover:underline"
             >
               View All
             </Link>
@@ -285,7 +285,7 @@ export default function AdminDashboardPage() {
                     <h3 className="text-xs font-bold text-slate-900 truncate">{enq.name}</h3>
                     <p className="text-[11px] text-slate-500 truncate">
                       {enq.service || enq.category} · {enq.city} ·{' '}
-                      <span className="font-mono text-[10px] text-[#13A89E]">
+                      <span className="font-mono text-[10px] text-[#FF6A03]">
                         {enq.referenceId}
                       </span>
                     </p>
@@ -296,7 +296,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <Link
                       to="/admin/enquiries"
-                      className="text-xs font-semibold text-[#13A89E] hover:underline"
+                      className="text-xs font-semibold text-[#FF6A03] hover:underline"
                     >
                       Desk
                     </Link>
@@ -312,13 +312,13 @@ export default function AdminDashboardPage() {
       {recentActivityLogs.length > 0 && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-            <h2 className="text-xs font-bold text-[#142D4E] uppercase tracking-wider flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-[#13A89E]" />
+            <h2 className="text-xs font-bold text-[#012A7A] uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-[#FF6A03]" />
               <span>Recent Operational Audit Trail</span>
             </h2>
             <Link
               to="/admin/activity-logs"
-              className="text-[11px] font-semibold text-[#13A89E] hover:underline"
+              className="text-[11px] font-semibold text-[#FF6A03] hover:underline"
             >
               Full Log
             </Link>

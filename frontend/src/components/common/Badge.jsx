@@ -2,7 +2,9 @@ import React from 'react';
 
 const variants = {
   teal: 'badge-teal',
+  orange: 'badge-orange',
   navy: 'badge-navy',
+  blue: 'badge-blue',
   grey: 'badge-grey',
   warning: 'badge-warning',
   success: 'badge-success',

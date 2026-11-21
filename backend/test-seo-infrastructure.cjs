@@ -86,7 +86,7 @@ async function run() {
   });
 
   await assert('Raw HTML contains article-specific <title>', async () => {
-    if (!html.includes('<title>How to Choose the Right Home Interior Designer — KONNEVIA Editorial</title>')) {
+    if (!html.includes('<title>How to Choose the Right Home Interior Designer — Dealsathi Editorial</title>')) {
       return 'Missing expected article <title>';
     }
     return true;
@@ -142,7 +142,7 @@ async function run() {
     if (json['@type'] !== 'Article') return `Expected @type Article, got ${json['@type']}`;
     if (json.headline !== 'How to Choose the Right Home Interior Designer in India') return `Wrong headline: ${json.headline}`;
     if (!json.author || json.author.name !== 'Priya Sharma') return 'Missing/wrong author';
-    if (!json.publisher || json.publisher.name !== 'KONNEVIA') return 'Missing/wrong publisher';
+    if (!json.publisher || json.publisher.name !== 'Dealsathi') return 'Missing/wrong publisher';
     return true;
   });
 
@@ -154,7 +154,7 @@ async function run() {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
     });
     if (botRes.status !== 200) return `Expected 200, got ${botRes.status}`;
-    if (!botRes.data.includes('<title>How to Choose the Right Home Interior Designer — KONNEVIA Editorial</title>')) {
+    if (!botRes.data.includes('<title>How to Choose the Right Home Interior Designer — Dealsathi Editorial</title>')) {
       return 'Googlebot did not receive pre-rendered article HTML';
     }
     return true;

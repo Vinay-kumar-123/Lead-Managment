@@ -1,4 +1,5 @@
 import Provider from '../models/Provider.js';
+import { escapeRegex } from '../services/categoryService.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import logger from '../utils/logger.js';
 
@@ -9,7 +10,7 @@ export const providerController = {
    */
   async getPublicProviders(req, res, next) {
     try {
-      const { category, location, search } = req.query;
+      const { category, subcategory, location, search } = req.query;
 
       // Strict public visibility gate
       const query = {
@@ -17,26 +18,49 @@ export const providerController = {
         publicationStatus: 'PUBLISHED',
       };
 
-      if (category) {
+      if (category && typeof category === 'string' && category.trim()) {
         query.categorySlug = category.toLowerCase().trim();
       }
 
-      if (location) {
-        const cleanLoc = location.trim();
-        query.$or = [
-          { city: { $regex: cleanLoc, $options: 'i' } },
-          { state: { $regex: cleanLoc, $options: 'i' } },
-          { serviceAreas: { $regex: cleanLoc, $options: 'i' } },
-        ];
+      const andConditions = [];
+
+      if (subcategory && typeof subcategory === 'string' && subcategory.trim()) {
+        const cleanSub = escapeRegex(subcategory.trim().slice(0, 100));
+        andConditions.push({
+          $or: [
+            { services: { $regex: cleanSub, $options: 'i' } },
+            { description: { $regex: cleanSub, $options: 'i' } },
+          ],
+        });
       }
 
-      if (search) {
-        const cleanSearch = search.trim();
-        query.$or = [
-          { businessName: { $regex: cleanSearch, $options: 'i' } },
-          { description: { $regex: cleanSearch, $options: 'i' } },
-          { services: { $regex: cleanSearch, $options: 'i' } },
-        ];
+      if (location && typeof location === 'string' && location.trim()) {
+        const cleanLoc = escapeRegex(location.trim().slice(0, 100));
+        andConditions.push({
+          $or: [
+            { city: { $regex: cleanLoc, $options: 'i' } },
+            { state: { $regex: cleanLoc, $options: 'i' } },
+            { serviceAreas: { $regex: cleanLoc, $options: 'i' } },
+          ],
+        });
+      }
+
+      if (search && typeof search === 'string' && search.trim()) {
+        const cleanSearch = escapeRegex(search.trim().slice(0, 100));
+        andConditions.push({
+          $or: [
+            { businessName: { $regex: cleanSearch, $options: 'i' } },
+            { description: { $regex: cleanSearch, $options: 'i' } },
+            { services: { $regex: cleanSearch, $options: 'i' } },
+            { category: { $regex: cleanSearch, $options: 'i' } },
+          ],
+        });
+      }
+
+      if (andConditions.length === 1) {
+        query.$or = andConditions[0].$or;
+      } else if (andConditions.length > 1) {
+        query.$and = andConditions;
       }
 
       const providers = await Provider.find(query).sort({ publishedAt: -1 }).lean();

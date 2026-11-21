@@ -1,4 +1,4 @@
-# KONNEVIA REST API Documentation
+# Dealsathi REST API Documentation
 
 Base path: `/api/v1`
 

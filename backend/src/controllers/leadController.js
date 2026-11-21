@@ -86,7 +86,7 @@ export const leadController = {
           status: 'received',
           createdAt: lead.createdAt || new Date(),
         },
-        'Your message has been delivered to the KONNEVIA communication desk. Our team will get back to you shortly.',
+        'Your message has been delivered to the Dealsathi communication desk. Our team will get back to you shortly.',
         201
       );
     } catch (err) {

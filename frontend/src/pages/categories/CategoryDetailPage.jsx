@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePageMeta } from '../../hooks/usePageMeta.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
 import ServiceCard from '../../components/marketplace/ServiceCard.jsx';
 import ProviderCard from '../../components/marketplace/ProviderCard.jsx';
-import { getCategoryBySlug, categories } from '../../data/categories.js';
 import { getServicesByCategory } from '../../data/services.js';
 import { getProvidersByCategory } from '../../data/providers.js';
+import providerService from '../../services/providerService.js';
 import {
   Home,
   Camera,
@@ -32,14 +33,36 @@ const iconMap = {
 
 export default function CategoryDetailPage() {
   const { slug } = useParams();
+  const { getCategoryBySlug } = useCategories();
   const category = getCategoryBySlug(slug);
 
+  const [categoryProviders, setCategoryProviders] = useState(() =>
+    category ? getProvidersByCategory(category.slug) : []
+  );
+
+  useEffect(() => {
+    if (!category) return;
+    let isMounted = true;
+    providerService
+      .getProviders({ categorySlug: category.slug })
+      .then((res) => {
+        if (isMounted && Array.isArray(res?.data)) {
+          setCategoryProviders(res.data);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [category?.slug]);
+
   usePageMeta({
-    title: category ? `${category.name} Services — KONNEVIA` : 'Category Not Found — KONNEVIA',
+    title: category ? `${category.name} Services — Dealsathi` : 'Category Not Found — Dealsathi',
     description: category
       ? category.metaDescription || category.description
-      : 'The requested category does not exist in the KONNEVIA marketplace directory.',
-    canonical: category ? `https://konnevia.com/categories/${category.slug}` : undefined,
+      : 'The requested category does not exist in the Dealsathi marketplace directory.',
+    canonical: category ? `https://dealsathi.in/categories/${category.slug}` : undefined,
   });
 
   if (!category) {
@@ -58,7 +81,9 @@ export default function CategoryDetailPage() {
 
   const IconComponent = iconMap[category.icon] || Layers;
   const categoryServices = getServicesByCategory(category.slug);
-  const categoryProviders = getProvidersByCategory(category.slug);
+  const activeSubcategories = (category.subcategories || []).filter(
+    (sub) => sub && sub.isActive !== false
+  );
 
   return (
     <div className="bg-background min-h-screen">
@@ -116,28 +141,45 @@ export default function CategoryDetailPage() {
 
       <div className="container-max py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
         {/* Subcategories Section */}
-        {category.subcategories && category.subcategories.length > 0 && (
+        {activeSubcategories.length > 0 && (
           <section aria-labelledby="subcategories-heading">
-            <h2 id="subcategories-heading" className="text-xl sm:text-2xl font-bold text-primary mb-6">
-              Specialized Subcategories
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 id="subcategories-heading" className="text-xl sm:text-2xl font-bold text-primary">
+                  Specialized Subcategories
+                </h2>
+                <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+                  Explore {activeSubcategories.length} active service specializations under {category.name}
+                </p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {category.subcategories.map((sub) => (
+              {activeSubcategories.map((sub) => (
                 <div
-                  key={sub.id}
-                  className="bg-white p-5 rounded-lg border border-border/80 hover:border-accent/40 transition-colors shadow-xs"
+                  key={sub.id || sub.slug}
+                  className="bg-white p-5 rounded-lg border border-border/80 hover:border-accent/40 transition-colors shadow-xs flex flex-col justify-between"
                 >
-                  <h3 className="font-bold text-primary text-base mb-1.5">{sub.name}</h3>
-                  <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-4">
-                    {sub.description}
-                  </p>
-                  <Link
-                    to={`/providers?category=${encodeURIComponent(category.slug)}&search=${encodeURIComponent(sub.name)}`}
-                    className="text-xs font-semibold text-accent hover:text-accent-600 inline-flex items-center gap-1"
-                  >
-                    <span>View Providers in {sub.name}</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Link>
+                  <div>
+                    <h3 className="font-bold text-primary text-base mb-1.5">{sub.name}</h3>
+                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-4">
+                      {sub.description || `Connect with verified ${sub.name} professionals in ${category.name}.`}
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <Link
+                      to={`/providers?category=${encodeURIComponent(category.slug)}&search=${encodeURIComponent(sub.name)}`}
+                      className="text-xs font-semibold text-accent hover:text-accent-600 inline-flex items-center gap-1"
+                    >
+                      <span>View Providers</span>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </Link>
+                    <Link
+                      to={`/get-quote?category=${encodeURIComponent(category.slug)}&service=${encodeURIComponent(sub.name)}`}
+                      className="text-xs font-semibold text-primary hover:text-accent underline"
+                    >
+                      Get Quote
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

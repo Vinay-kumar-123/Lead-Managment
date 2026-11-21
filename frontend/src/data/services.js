@@ -32,7 +32,7 @@ export const services = [
         a: 'Interior design costs depend on whether you choose turnkey execution or design-only consulting. Turnkey 2BHK projects generally range between ₹3.5 Lakh to ₹10 Lakh+ depending on laminate vs. acrylic finishes, hardware brands, and civil modifications.',
       },
       {
-        q: 'How does KONNEVIA match me with an interior designer?',
+        q: 'How does Dealsathi match me with an interior designer?',
         a: 'When you submit an enquiry with your property details, budget, and location, our marketplace team manually reviews your requirements and pairs you with up to 2 verified designers who specialize in your project scope.',
       },
       {
@@ -40,8 +40,8 @@ export const services = [
         a: 'Standard modular woodwork and finishing for a 2BHK takes roughly 45–60 days post design finalization. Civil modifications, flooring changes, or structural additions may extend the timeline to 75–90 days.',
       },
     ],
-    metaTitle: 'Interior Design Services in India — KONNEVIA',
-    metaDescription: 'Find vetted interior designers and turnkey contractors for homes and offices on KONNEVIA. Get transparent quotes tailored to your budget.',
+    metaTitle: 'Interior Design Services in India — Dealsathi',
+    metaDescription: 'Find vetted interior designers and turnkey contractors for homes and offices on Dealsathi. Get transparent quotes tailored to your budget.',
   },
   {
     id: 'home-renovation',
@@ -74,11 +74,11 @@ export const services = [
       },
       {
         q: 'Are waterproofing repairs covered under warranty?',
-        a: 'Reputable contractors onboarded on KONNEVIA provide standard written warranties (typically 3 to 5 years) on specialized chemical waterproofing treatments.',
+        a: 'Reputable contractors onboarded on Dealsathi provide standard written warranties (typically 3 to 5 years) on specialized chemical waterproofing treatments.',
       },
     ],
-    metaTitle: 'Home Renovation & Remodeling Contractors — KONNEVIA',
-    metaDescription: 'Find experienced renovation contractors for complete apartment remodeling, waterproofing, and structural upgrades on KONNEVIA.',
+    metaTitle: 'Home Renovation & Remodeling Contractors — Dealsathi',
+    metaDescription: 'Find experienced renovation contractors for complete apartment remodeling, waterproofing, and structural upgrades on Dealsathi.',
   },
   {
     id: 'wedding-planning',
@@ -114,8 +114,8 @@ export const services = [
         a: 'Yes, a dedicated planner builds a line-item budget tracker, manages vendor payment schedules, and ensures expenses remain aligned with your agreed ceiling.',
       },
     ],
-    metaTitle: 'Wedding Planners & Event Coordinators — KONNEVIA',
-    metaDescription: 'Discover verified wedding planners for destination and luxury celebrations across India on KONNEVIA.',
+    metaTitle: 'Wedding Planners & Event Coordinators — Dealsathi',
+    metaDescription: 'Discover verified wedding planners for destination and luxury celebrations across India on Dealsathi.',
   },
   {
     id: 'website-development',
@@ -151,8 +151,8 @@ export const services = [
         a: 'A high-converting 5–8 page corporate website typically takes 3 to 4 weeks. Custom e-commerce portals or web apps usually span 6 to 12 weeks depending on integrations.',
       },
     ],
-    metaTitle: 'Website Development Services & Agencies — KONNEVIA',
-    metaDescription: 'Find verified website developers and software agencies for high-performance business websites and web applications on KONNEVIA.',
+    metaTitle: 'Website Development Services & Agencies — Dealsathi',
+    metaDescription: 'Find verified website developers and software agencies for high-performance business websites and web applications on Dealsathi.',
   },
 ];
 

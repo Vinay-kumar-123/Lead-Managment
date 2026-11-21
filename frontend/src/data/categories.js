@@ -9,8 +9,8 @@ export const categories = [
     description: 'Connect with verified professionals for interior design, renovation, construction, painting, plumbing, and home improvement needs.',
     shortDescription: 'Interior design, renovation, painting & plumbing',
     icon: 'Home',
-    color: '#142D4E',
-    bgColor: '#E8EDF3',
+    color: '#012A7A',
+    bgColor: '#EEF3FF',
     subcategories: [
       { id: 'interior-design', slug: 'interior-design', name: 'Interior Design', description: 'Transform living and work spaces with experienced interior designers.' },
       { id: 'home-renovation', slug: 'home-renovation', name: 'Home Renovation', description: 'Full home renovation, bathroom and kitchen remodeling contractors.' },
@@ -19,8 +19,8 @@ export const categories = [
       { id: 'plumbing', slug: 'plumbing', name: 'Plumbing', description: 'Plumbing installation, sanitary fittings, repair, and pipeline maintenance.' },
     ],
     popularServices: ['Interior Design', 'Home Renovation', 'Modular Kitchen', 'Painting', 'Plumbing'],
-    metaTitle: 'Home & Construction Services — KONNEVIA',
-    metaDescription: 'Find verified interior designers, renovation contractors, painters, and plumbers across India on KONNEVIA.',
+    metaTitle: 'Home & Construction Services — Dealsathi',
+    metaDescription: 'Find verified interior designers, renovation contractors, painters, and plumbers across India on Dealsathi.',
   },
   {
     id: 'events-lifestyle',
@@ -29,8 +29,8 @@ export const categories = [
     description: 'Discover professionals for weddings, candid photography, luxury event decoration, and personalized lifestyle services.',
     shortDescription: 'Wedding planning, photography & event decoration',
     icon: 'Camera',
-    color: '#13A89E',
-    bgColor: '#E6F7F6',
+    color: '#FF6A03',
+    bgColor: '#FFF4ED',
     subcategories: [
       { id: 'wedding-planning', slug: 'wedding-planning', name: 'Wedding Planning', description: 'Full-service wedding planners, destination coordinators, and managers.' },
       { id: 'photography', slug: 'photography', name: 'Photography', description: 'Candid wedding, pre-wedding, maternity, and corporate event photographers.' },
@@ -38,8 +38,8 @@ export const categories = [
       { id: 'lifestyle-services', slug: 'lifestyle-services', name: 'Lifestyle Services', description: 'Personal styling, fitness wellness consulting, and personal care services.' },
     ],
     popularServices: ['Wedding Planning', 'Photography', 'Event Decoration', 'Catering', 'DJ & Entertainment'],
-    metaTitle: 'Events & Lifestyle Services — KONNEVIA',
-    metaDescription: 'Connect with trusted wedding planners, candid photographers, and event decorators across India on KONNEVIA.',
+    metaTitle: 'Events & Lifestyle Services — Dealsathi',
+    metaDescription: 'Connect with trusted wedding planners, candid photographers, and event decorators across India on Dealsathi.',
   },
   {
     id: 'business-property',
@@ -48,7 +48,7 @@ export const categories = [
     description: 'Professional support for commercial property leasing, property advisory, and company business services.',
     shortDescription: 'Commercial property & business support services',
     icon: 'Building2',
-    color: '#1E40AF',
+    color: '#014EBA',
     bgColor: '#EFF6FF',
     subcategories: [
       { id: 'commercial-property', slug: 'commercial-property', name: 'Commercial Property', description: 'Office spaces, retail shops, co-working spaces, and commercial leasing.' },
@@ -56,8 +56,8 @@ export const categories = [
       { id: 'business-services', slug: 'business-services', name: 'Business Services', description: 'Business registration, accounting, CA/CS, compliance, and consulting.' },
     ],
     popularServices: ['Commercial Office Space', 'Property Verification', 'Company Incorporation', 'GST & Accounting Advisory'],
-    metaTitle: 'Business & Property Services — KONNEVIA',
-    metaDescription: 'Find commercial property consultants and qualified business service providers on KONNEVIA.',
+    metaTitle: 'Business & Property Services — Dealsathi',
+    metaDescription: 'Find commercial property consultants and qualified business service providers on Dealsathi.',
   },
   {
     id: 'digital-professional',
@@ -66,8 +66,8 @@ export const categories = [
     description: 'Connect with software engineers, website developers, performance marketers, and specialized professional service agencies.',
     shortDescription: 'Website development, software & digital marketing',
     icon: 'Monitor',
-    color: '#7C3AED',
-    bgColor: '#F5F3FF',
+    color: '#013696',
+    bgColor: '#EEF3FF',
     subcategories: [
       { id: 'website-development', slug: 'website-development', name: 'Website Development', description: 'Custom responsive websites, landing pages, and web portals.' },
       { id: 'software-development', slug: 'software-development', name: 'Software Development', description: 'Custom SaaS, mobile applications, and backend engineering.' },
@@ -75,8 +75,8 @@ export const categories = [
       { id: 'professional-services', slug: 'professional-services', name: 'Professional Services', description: 'Legal drafting, trademark filing, recruitment, and management consulting.' },
     ],
     popularServices: ['Website Development', 'SEO Optimization', 'Mobile App Development', 'Performance Marketing'],
-    metaTitle: 'Digital & Professional Services — KONNEVIA',
-    metaDescription: 'Find top web developers, digital marketing specialists, and professional consultants on KONNEVIA.',
+    metaTitle: 'Digital & Professional Services — Dealsathi',
+    metaDescription: 'Find top web developers, digital marketing specialists, and professional consultants on Dealsathi.',
   },
   {
     id: 'education-career',
@@ -85,8 +85,8 @@ export const categories = [
     description: 'Explore professional training programs, career guidance mentorship, internship pathways, and educational services.',
     shortDescription: 'Professional training, internships & career guidance',
     icon: 'GraduationCap',
-    color: '#D97706',
-    bgColor: '#FFFBEB',
+    color: '#E55800',
+    bgColor: '#FFF4ED',
     subcategories: [
       { id: 'training', slug: 'training', name: 'Training', description: 'Executive upskilling, technical bootcamps, and professional certifications.' },
       { id: 'internships', slug: 'internships', name: 'Internships', description: 'Verified industry internship pathways for students and graduates.' },
@@ -94,8 +94,8 @@ export const categories = [
       { id: 'educational-services', slug: 'educational-services', name: 'Educational Services', description: 'Higher education admissions guidance, test prep, and coaching.' },
     ],
     popularServices: ['Career Guidance & Mentorship', 'Digital Skills Training', 'Internship Programs', 'Study Abroad Advisory'],
-    metaTitle: 'Education & Career Services — KONNEVIA',
-    metaDescription: 'Discover professional skill training, internships, and career guidance programs on KONNEVIA.',
+    metaTitle: 'Education & Career Services — Dealsathi',
+    metaDescription: 'Discover professional skill training, internships, and career guidance programs on Dealsathi.',
   },
 ];
 

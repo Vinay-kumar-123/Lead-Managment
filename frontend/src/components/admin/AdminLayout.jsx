@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import BrandLogo from '../common/BrandLogo.jsx';
 import {
   LayoutDashboard,
   Users,
-  CheckCircle2,
   BookOpen,
   LogOut,
   ExternalLink,
-  ShieldCheck,
   Building2,
   FileText,
   Activity,
@@ -16,7 +15,6 @@ import {
   Layers,
   Menu,
   X,
-  UserCheck,
 } from 'lucide-react';
 
 export default function AdminLayout({ children, title, subtitle }) {
@@ -49,12 +47,12 @@ export default function AdminLayout({ children, title, subtitle }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex flex-col md:flex-row font-sans text-[#172B43]">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans text-text-primary">
       {/* Mobile Header */}
-      <header className="md:hidden bg-[#142D4E] text-white p-4 flex items-center justify-between border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <span className="font-black text-base tracking-wider text-white">KONNEVIA</span>
-          <span className="text-[10px] uppercase font-bold text-[#13A89E] tracking-widest px-1.5 py-0.5 rounded bg-[#13A89E]/20">
+      <header className="md:hidden bg-primary-900 text-white p-4 flex items-center justify-between border-b border-primary-800">
+        <div className="flex items-center gap-2.5">
+          <BrandLogo variant="sidebar" showWordmark={true} showTagline={false} />
+          <span className="text-[10px] uppercase font-bold text-accent-400 tracking-widest px-1.5 py-0.5 rounded bg-accent/20">
             Admin
           </span>
         </div>
@@ -62,6 +60,7 @@ export default function AdminLayout({ children, title, subtitle }) {
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-slate-300 hover:text-white"
+          aria-label={mobileMenuOpen ? 'Close navigation' : 'Open navigation'}
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -69,22 +68,21 @@ export default function AdminLayout({ children, title, subtitle }) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`w-full md:w-64 bg-[#142D4E] text-slate-200 flex flex-col justify-between shrink-0 ${
+        className={`w-full md:w-64 bg-primary-900 text-slate-200 flex flex-col justify-between shrink-0 ${
           mobileMenuOpen ? 'block' : 'hidden md:flex'
         }`}
       >
         <div>
           {/* Logo and Brand */}
-          <div className="p-6 border-b border-slate-800/80 flex items-center justify-between">
-            <div>
-              <span className="text-xl font-black tracking-wider text-white">KONNEVIA</span>
-              <span className="block text-[10px] uppercase font-bold text-[#13A89E] tracking-widest mt-0.5">
-                Operations Portal
-              </span>
-            </div>
-            <div className="w-8 h-8 rounded-xl bg-[#13A89E]/20 text-[#13A89E] flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
+          <div className="p-5 border-b border-primary-800/80 flex items-center justify-between">
+            <Link to="/admin" className="group">
+              <BrandLogo
+                variant="sidebar"
+                showWordmark={true}
+                showTagline={true}
+                subtitle="Operations Portal"
+              />
+            </Link>
           </div>
 
           {/* Links */}
@@ -99,8 +97,8 @@ export default function AdminLayout({ children, title, subtitle }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-[#13A89E] text-white shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-primary-800/70'
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
@@ -112,13 +110,13 @@ export default function AdminLayout({ children, title, subtitle }) {
         </div>
 
         {/* User Info & Actions */}
-        <div className="p-4 border-t border-slate-800/80 space-y-3">
-          <div className="px-3.5 py-2.5 bg-slate-800/50 rounded-xl text-xs border border-slate-700/40">
-            <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">
+        <div className="p-4 border-t border-primary-800/80 space-y-3">
+          <div className="px-3.5 py-2.5 bg-primary-800/60 rounded-xl text-xs border border-primary-700/50">
+            <span className="text-[10px] text-blue-200/70 uppercase font-bold block mb-0.5">
               Logged in as
             </span>
             <span className="font-semibold text-white truncate block">{admin?.email || 'Owner'}</span>
-            <span className="text-[10px] text-[#13A89E] font-bold uppercase tracking-wider">
+            <span className="text-[10px] text-accent-400 font-bold uppercase tracking-wider">
               {admin?.role || 'SUPER_ADMIN'}
             </span>
           </div>
@@ -151,15 +149,15 @@ export default function AdminLayout({ children, title, subtitle }) {
         {/* Top Header Bar */}
         <div className="bg-white border-b border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#142D4E] tracking-tight">{title}</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-primary tracking-tight">{title}</h1>
             {subtitle && (
-              <p className="text-xs text-[#64748B] mt-0.5 font-medium">{subtitle}</p>
+              <p className="text-xs text-text-muted mt-0.5 font-medium">{subtitle}</p>
             )}
           </div>
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>System Online</span>
+              <span>Dealsathi Core Online</span>
             </span>
           </div>
         </div>

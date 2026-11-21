@@ -153,7 +153,7 @@ export default function AdminBlogsPage() {
                       <span className="text-[11px] font-mono text-slate-500 block truncate max-w-xs">/blog/{b.slug}</span>
                     </td>
                     <td className="py-3.5 px-4 font-medium text-slate-700">{b.category}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{b.author?.name || 'Staff'}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{(b.author?.name || 'Staff').replace(/\bKONNEVIA\b/gi, 'Dealsathi')}</td>
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${

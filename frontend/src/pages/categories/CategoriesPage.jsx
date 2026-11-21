@@ -3,15 +3,17 @@ import { usePageMeta } from '../../hooks/usePageMeta.js';
 import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import SectionHeading from '../../components/common/SectionHeading.jsx';
 import CategoryCard from '../../components/marketplace/CategoryCard.jsx';
-import { categories } from '../../data/categories.js';
+import { useCategories } from '../../hooks/useCategories.js';
 import { ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function CategoriesPage() {
+  const { categories } = useCategories();
+
   usePageMeta({
-    title: 'Marketplace Service Categories — KONNEVIA',
-    description: 'Explore verified service categories across Home & Construction, Events & Lifestyle, Business & Property, Digital & Professional, and Education.',
-    canonical: 'https://konnevia.com/categories',
+    title: 'Marketplace Service Categories — Dealsathi',
+    description: 'Explore verified service categories across Home & Construction, Events & Lifestyle, Business & Property, Digital & Professional, and Education on Dealsathi.',
+    canonical: 'https://dealsathi.in/categories',
   });
 
   return (
@@ -33,7 +35,7 @@ export default function CategoriesPage() {
             Marketplace Service Categories
           </h1>
           <p className="text-text-muted text-base sm:text-lg leading-relaxed">
-            Browse verified marketplace sectors across India. Every service request submitted through KONNEVIA is individually reviewed and matched with vetted service professionals.
+            Browse verified marketplace sectors across India. Every service request submitted through Dealsathi is individually reviewed and matched with vetted service professionals.
           </p>
         </div>
 
@@ -49,7 +51,7 @@ export default function CategoriesPage() {
         {/* Informational Callout */}
         <div className="bg-white rounded-xl border border-border/80 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-teal-50 text-accent flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg bg-accent-50 text-accent flex items-center justify-center flex-shrink-0 border border-accent-100">
               <ShieldCheck className="w-6 h-6" aria-hidden="true" />
             </div>
             <div>

@@ -59,9 +59,9 @@ const CATEGORIES = [
 
 export default function AboutPage() {
   usePageMeta({
-    title: 'About KONNEVIA — Pan-India Service Discovery & Quality Facilitation',
-    description: 'Learn about KONNEVIA’s manual-first marketplace model, structured service categories, and our mission to bring transparency to professional contracting across India.',
-    canonical: 'https://konnevia.in/about',
+    title: 'About Dealsathi — Pan-India Service Discovery & Quality Facilitation',
+    description: 'Learn about Dealsathi’s manual-first marketplace model, structured service categories, and our mission to bring transparency to professional contracting across India.',
+    canonical: 'https://dealsathi.in/about',
   });
 
   return (
@@ -85,7 +85,7 @@ export default function AboutPage() {
               Organizing High-Stakes Service Discovery Across India
             </h1>
             <p className="text-base sm:text-lg text-text-muted leading-relaxed mb-8 font-medium">
-              KONNEVIA is a structured marketplace architecture connecting discerning individuals and growing businesses with verified, independent service professionals. We operate across five core domains where reliability, verifiable work samples, and transparent scope definitions matter most.
+              Dealsathi is a structured marketplace architecture connecting discerning individuals and growing businesses with verified, independent service professionals. We operate across five core domains where reliability, verifiable work samples, and transparent scope definitions matter most.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/categories" className="btn-primary py-3 px-6 text-sm font-semibold flex items-center gap-2">
@@ -135,7 +135,7 @@ export default function AboutPage() {
               Five Finalized Marketplace Verticals
             </h2>
             <p className="text-sm sm:text-base text-text-muted leading-relaxed">
-              Every category on KONNEVIA is built with domain-specific scoping attributes, ensuring clients receive tailored proposals and contractors receive well-defined specifications.
+              Every category on Dealsathi is built with domain-specific scoping attributes, ensuring clients receive tailored proposals and contractors receive well-defined specifications.
             </p>
           </div>
 
@@ -188,7 +188,7 @@ export default function AboutPage() {
                 The Manual-First Operational Model
               </h2>
               <p className="text-sm sm:text-base text-slate-200 leading-relaxed mb-6">
-                Unlike automated directory scrapers or lead-auction platforms where customer phone numbers are broadcast to dozens of telemarketers, KONNEVIA operates a human-reviewed, manual-first discovery desk:
+                Unlike automated directory scrapers or lead-auction platforms where customer phone numbers are broadcast to dozens of telemarketers, Dealsathi operates a human-reviewed, manual-first discovery desk:
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-white/10 text-xs sm:text-sm">
@@ -295,7 +295,7 @@ export default function AboutPage() {
       <section className="py-12 bg-background border-t border-border/60">
         <div className="container-max px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
           <p className="text-xs text-text-muted leading-relaxed mb-4">
-            KONNEVIA is a marketplace facilitator. Individual service contracts, work guarantees, milestone payments, and on-site warranties are executed directly between the hiring client and the independent contractor.
+            Dealsathi is a marketplace facilitator. Individual service contracts, work guarantees, milestone payments, and on-site warranties are executed directly between the hiring client and the independent contractor.
           </p>
           <div className="flex items-center justify-center gap-6 text-xs font-semibold text-accent">
             <Link to="/terms" className="hover:underline">Platform Terms</Link>

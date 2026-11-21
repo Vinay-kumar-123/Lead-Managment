@@ -22,7 +22,7 @@ async function request(endpoint, options = {}) {
   // Retrieve stored admin session token if available
   let authToken = null;
   try {
-    authToken = localStorage.getItem('konnevia_admin_token');
+    authToken = localStorage.getItem('dealsathi_admin_token') || localStorage.getItem('konnevia_admin_token');
   } catch {
     // LocalStorage inaccessible (e.g. strict private browsing)
   }
@@ -76,7 +76,7 @@ async function request(endpoint, options = {}) {
       );
     }
     throw new ApiError(
-      'Unable to connect to the KONNEVIA server. Please verify your connection or try again shortly.',
+      'Unable to connect to the Dealsathi server. Please verify your connection or try again shortly.',
       0
     );
   }

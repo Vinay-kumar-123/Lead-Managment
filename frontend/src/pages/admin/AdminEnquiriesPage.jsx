@@ -129,7 +129,7 @@ export default function AdminEnquiriesPage() {
             placeholder="Search by name, phone, email, ref ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#13A89E]"
+            className="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6A03]"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
         </form>
@@ -139,7 +139,7 @@ export default function AdminEnquiriesPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-auto text-xs py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#13A89E] font-medium"
+            className="w-full sm:w-auto text-xs py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6A03] font-medium"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -161,7 +161,7 @@ export default function AdminEnquiriesPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         {isLoading ? (
           <div className="p-16 text-center">
-            <div className="w-8 h-8 border-3 border-[#13A89E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-3 border-[#FF6A03] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-xs text-slate-500">Loading enquiries from database...</p>
           </div>
         ) : enquiries.length === 0 ? (
@@ -189,7 +189,7 @@ export default function AdminEnquiriesPage() {
               <tbody className="divide-y divide-slate-100">
                 {enquiries.map((enq) => (
                   <tr key={enq._id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#13A89E]">
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#FF6A03]">
                       {enq.referenceId}
                     </td>
                     <td className="py-3.5 px-4">
@@ -227,7 +227,7 @@ export default function AdminEnquiriesPage() {
                           setSelectedEnquiry(enq);
                           setNewStatus(enq.status);
                         }}
-                        className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-[#13A89E] hover:text-white text-slate-700 font-semibold transition-colors inline-flex items-center gap-1 text-[11px]"
+                        className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-[#FF6A03] hover:text-white text-slate-700 font-semibold transition-colors inline-flex items-center gap-1 text-[11px]"
                       >
                         <Eye className="w-3 h-3" />
                         <span>Inspect</span>
@@ -247,10 +247,10 @@ export default function AdminEnquiriesPage() {
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
               <div>
-                <span className="text-xs font-mono font-bold text-[#13A89E] block">
+                <span className="text-xs font-mono font-bold text-[#FF6A03] block">
                   {selectedEnquiry.referenceId}
                 </span>
-                <h3 className="text-lg font-black text-[#142D4E]">{selectedEnquiry.name}</h3>
+                <h3 className="text-lg font-black text-[#012A7A]">{selectedEnquiry.name}</h3>
               </div>
               <button
                 type="button"

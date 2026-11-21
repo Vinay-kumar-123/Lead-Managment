@@ -1,8 +1,8 @@
-# KONNEVIA Architecture & Separation Specification
+# Dealsathi Architecture & Separation Specification
 
 ## Overview
 
-KONNEVIA is architected with strict, decoupled separation between the client presentation layer (**Frontend**) and the server business/persistence layer (**Backend**).
+Dealsathi is architected with strict, decoupled separation between the client presentation layer (**Frontend**) and the server business/persistence layer (**Backend**).
 
 ```text
 konnevia/

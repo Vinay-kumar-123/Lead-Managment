@@ -94,7 +94,7 @@ export const adminBlogController = {
         content: content.trim(),
         category: category.trim(),
         tags: Array.isArray(tags) ? tags : [],
-        author: author || { name: 'KONNEVIA Editorial Staff', role: 'Domain Contributor' },
+        author: author || { name: 'Dealsathi Editorial Staff', role: 'Domain Contributor' },
         coverImage: coverImage || '',
         status: ['draft', 'published', 'archived'].includes(status) ? status : 'draft',
         publishedAt: status === 'published' ? new Date() : null,

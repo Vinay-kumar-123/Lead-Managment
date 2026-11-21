@@ -27,17 +27,20 @@ export default function BlogDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Normalize any legacy KONNEVIA strings in stored database article metadata
+  const normalizeBrandText = (str) => (str ? String(str).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : str);
+
   // Dynamic meta tags & Article JSON-LD Structured Data
-  const articleCanonical = article ? `https://konnevia.in/blog/${article.slug}` : undefined;
+  const articleCanonical = article ? `https://dealsathi.in/blog/${article.slug}` : undefined;
   const articleJsonLd = article
     ? {
         '@context': 'https://schema.org',
         '@type': 'Article',
-        headline: article.metaTitle || article.title,
-        description: article.metaDescription || article.excerpt,
+        headline: normalizeBrandText(article.metaTitle || article.title),
+        description: normalizeBrandText(article.metaDescription || article.excerpt),
         image: article.coverImage
-          ? (article.coverImage.startsWith('http') ? article.coverImage : `https://konnevia.in${article.coverImage.startsWith('/') ? '' : '/'}${article.coverImage}`)
-          : 'https://konnevia.in/assets/og-image.jpg',
+          ? (article.coverImage.startsWith('http') ? article.coverImage : `https://dealsathi.in${article.coverImage.startsWith('/') ? '' : '/'}${article.coverImage}`)
+          : 'https://dealsathi.in/dealsathi-logo.png',
         datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined,
         dateModified: article.updatedAt ? new Date(article.updatedAt).toISOString() : (article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined),
         mainEntityOfPage: {
@@ -46,16 +49,16 @@ export default function BlogDetailPage() {
         },
         author: {
           '@type': 'Person',
-          name: article.author?.name || 'KONNEVIA Editorial Team',
+          name: normalizeBrandText(article.author?.name || 'Dealsathi Editorial Team'),
           jobTitle: article.author?.role || 'Editorial Specialist',
         },
         publisher: {
           '@type': 'Organization',
-          name: 'KONNEVIA',
-          url: 'https://konnevia.in',
+          name: 'Dealsathi',
+          url: 'https://dealsathi.in',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://konnevia.in/logo.svg',
+            url: 'https://dealsathi.in/dealsathi-logo.png',
           },
         },
         articleSection: article.category,
@@ -64,11 +67,11 @@ export default function BlogDetailPage() {
     : null;
 
   usePageMeta({
-    title: article ? (article.metaTitle || article.title) : 'Editorial Guide',
-    description: article ? (article.metaDescription || article.excerpt) : 'Editorial guide and service checklist on KONNEVIA.',
+    title: article ? normalizeBrandText(article.metaTitle || article.title) : 'Editorial Guide',
+    description: article ? normalizeBrandText(article.metaDescription || article.excerpt) : 'Editorial guide and service checklist on Dealsathi.',
     canonical: articleCanonical,
     ogType: 'article',
-    ogImage: article?.coverImage || '/assets/og-image.jpg',
+    ogImage: article?.coverImage || '/dealsathi-logo.png',
     article: article,
     jsonLd: articleJsonLd,
   });
@@ -244,7 +247,7 @@ export default function BlogDetailPage() {
                   </div>
                   <div>
                     <span className="font-bold text-primary block">
-                      {article.author?.name || 'KONNEVIA Editorial Staff'}
+                      {normalizeBrandText(article.author?.name || 'Dealsathi Editorial Staff')}
                     </span>
                     <span className="text-[11px]">{article.author?.role || 'Domain Contributor'}</span>
                   </div>

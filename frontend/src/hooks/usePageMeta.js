@@ -10,14 +10,14 @@ export function usePageMeta({
   description,
   canonical,
   ogType = 'website',
-  ogImage = '/assets/og-image.jpg',
+  ogImage = '/dealsathi-logo.png',
   article = null,
   jsonLd = null,
 }) {
   useEffect(() => {
     // 1. Update Title
     const formattedTitle = title
-      ? (title.includes(siteConfig.name) ? title : `${title} — ${siteConfig.name}`)
+      ? (title.toLowerCase().includes(siteConfig.name.toLowerCase()) ? title : `${title} — ${siteConfig.name}`)
       : `${siteConfig.name} — ${siteConfig.tagline}`;
     document.title = formattedTitle;
 

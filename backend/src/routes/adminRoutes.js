@@ -1,10 +1,11 @@
 import express from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import env from '../config/env.js';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, requireRole } from '../middleware/auth.js';
 import adminAuthController from '../controllers/adminAuthController.js';
 import adminProviderController from '../controllers/adminProviderController.js';
 import adminBlogController from '../controllers/adminBlogController.js';
+import adminCategoryController from '../controllers/adminCategoryController.js';
 
 const router = express.Router();
 
@@ -56,6 +57,56 @@ router.get('/blogs/:id', requireAdmin, adminBlogController.getBlogById);
 router.post('/blogs', requireAdmin, adminBlogController.createBlog);
 router.put('/blogs/:id', requireAdmin, adminBlogController.updateBlog);
 router.delete('/blogs/:id', requireAdmin, adminBlogController.archiveBlog);
+
+// Category & Subcategory Taxonomy Management (Strictly Admin-only)
+router.get(
+  '/categories',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.getCategories
+);
+router.post(
+  '/categories',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.createSubcategory
+);
+router.post(
+  '/categories/subcategories',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.createSubcategory
+);
+router.get(
+  '/categories/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.getCategoryById
+);
+router.put(
+  '/categories/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.updateSubcategory
+);
+router.patch(
+  '/categories/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.updateSubcategory
+);
+router.patch(
+  '/categories/:id/status',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.updateSubcategoryStatus
+);
+router.put(
+  '/categories/:id/status',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.updateSubcategoryStatus
+);
 
 // Activity Logs
 router.get('/activity-logs', requireAdmin, adminProviderController.getActivityLogs);

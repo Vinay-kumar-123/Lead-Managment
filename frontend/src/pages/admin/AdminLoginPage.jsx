@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { usePageMeta } from '../../hooks/usePageMeta.js';
-import { ShieldCheck, Lock, Mail, AlertCircle } from 'lucide-react';
+import BrandLogo from '../../components/common/BrandLogo.jsx';
+import { Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function AdminLoginPage() {
   usePageMeta({
-    title: 'Owner Portal Login — KONNEVIA',
-    description: 'Restricted administrative portal for KONNEVIA marketplace owner operations.',
+    title: 'Owner Portal Login — Dealsathi',
+    description: 'Restricted administrative portal for Dealsathi marketplace owner operations.',
   });
 
   const { login } = useAuth();
@@ -42,16 +43,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-800 border border-slate-700/80 rounded-3xl p-8 sm:p-10 shadow-2xl text-slate-100">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center mx-auto mb-4 border border-teal-500/30">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-white">KONNEVIA Operations</h1>
-          <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold">
-            Owner Authorization Portal
-          </p>
+    <div className="min-h-screen bg-primary-900 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-slate-900/90 border border-primary-700/60 rounded-3xl p-8 sm:p-10 shadow-2xl text-slate-100">
+        <div className="mb-8">
+          <BrandLogo
+            variant="auth"
+            showWordmark={true}
+            subtitle="Owner Authorization Portal"
+          />
         </div>
 
         {error && (
@@ -73,9 +72,9 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@konnevia.in"
+                placeholder="admin@dealsathi.in"
                 required
-                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -93,7 +92,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 required
-                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -101,11 +100,11 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 disabled:opacity-50 mt-2"
+            className="w-full bg-accent hover:bg-accent-600 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent/25 disabled:opacity-50 mt-2 cursor-pointer"
           >
             {isSubmitting ? (
               <>
-                <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Authenticating...</span>
               </>
             ) : (
@@ -114,8 +113,12 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-700/60 text-center text-[11px] text-slate-500">
-          Owner access only · Public registration disabled · Rate-limited
+        <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
+          <span>Owner access only · Rate-limited</span>
+          <Link to="/" className="text-accent-400 hover:underline inline-flex items-center gap-1 font-semibold">
+            <ArrowLeft className="w-3 h-3" />
+            <span>Marketplace Home</span>
+          </Link>
         </div>
       </div>
     </div>

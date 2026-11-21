@@ -6,7 +6,9 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [admin, setAdmin] = useState(() => {
     try {
-      const saved = localStorage.getItem('konnevia_admin_user');
+      const saved =
+        localStorage.getItem('dealsathi_admin_user') ||
+        localStorage.getItem('konnevia_admin_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -14,7 +16,11 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => {
     try {
-      return localStorage.getItem('konnevia_admin_token') || null;
+      return (
+        localStorage.getItem('dealsathi_admin_token') ||
+        localStorage.getItem('konnevia_admin_token') ||
+        null
+      );
     } catch {
       return null;
     }
@@ -25,6 +31,8 @@ export function AuthProvider({ children }) {
     setToken(null);
     setAdmin(null);
     try {
+      localStorage.removeItem('dealsathi_admin_token');
+      localStorage.removeItem('dealsathi_admin_user');
       localStorage.removeItem('konnevia_admin_token');
       localStorage.removeItem('konnevia_admin_user');
     } catch {
@@ -44,6 +52,7 @@ export function AuthProvider({ children }) {
           if (res.success && res.data) {
             setAdmin(res.data);
             try {
+              localStorage.setItem('dealsathi_admin_user', JSON.stringify(res.data));
               localStorage.setItem('konnevia_admin_user', JSON.stringify(res.data));
             } catch {}
           } else {
@@ -77,6 +86,8 @@ export function AuthProvider({ children }) {
       setToken(sessionToken);
       setAdmin(user);
       try {
+        localStorage.setItem('dealsathi_admin_token', sessionToken);
+        localStorage.setItem('dealsathi_admin_user', JSON.stringify(user));
         localStorage.setItem('konnevia_admin_token', sessionToken);
         localStorage.setItem('konnevia_admin_user', JSON.stringify(user));
       } catch {}

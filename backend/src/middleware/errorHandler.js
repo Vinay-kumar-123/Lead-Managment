@@ -9,11 +9,27 @@ export const errorHandler = (err, req, res, next) => {
     method: req.method,
   });
 
+  if (err && (err.code === 11000 || String(err.message || '').includes('E11000'))) {
+    return errorResponse(res, 'A record with this unique identifier or slug already exists.', 409);
+  }
+
+  if (err && err.name === 'CastError') {
+    return errorResponse(res, 'Invalid resource identifier format.', 400);
+  }
+
+  if (err && err.name === 'ValidationError') {
+    return errorResponse(res, 'Validation failed. Please verify the submitted fields.', 400);
+  }
+
+  if (err && err.type === 'entity.parse.failed') {
+    return errorResponse(res, 'Malformed JSON payload.', 400);
+  }
+
   const statusCode = err.statusCode || 500;
   const message =
-    process.env.NODE_ENV === 'production' && statusCode === 500
-      ? 'An unexpected error occurred. Please try again later.'
-      : err.message || 'Internal server error';
+    statusCode === 500
+      ? 'An unexpected server error occurred. Please try again later.'
+      : err.message || 'Request could not be processed.';
 
   return errorResponse(res, message, statusCode);
 };
