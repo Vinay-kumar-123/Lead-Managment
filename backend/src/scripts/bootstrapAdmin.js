@@ -11,8 +11,8 @@ import logger from '../utils/logger.js';
  */
 async function run() {
   const args = process.argv.slice(2);
-  const email = (args[0] || env.admin.email || 'admin@konnevia.in').trim().toLowerCase();
-  const password = args[1] || env.admin.password || 'Konnevia@Admin2026!';
+  const email = (args[0] || env.admin.email ).trim().toLowerCase();
+  const password = args[1] || env.admin.password ;
 
   if (!email || !password || password.length < 8) {
     console.error('Usage: node src/scripts/bootstrapAdmin.js <email> <password (min 8 chars)>');
