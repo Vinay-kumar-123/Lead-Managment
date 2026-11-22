@@ -14,8 +14,9 @@ import {
 import { usePageMeta } from '../../hooks/usePageMeta.js';
 import { useCategories } from '../../hooks/useCategories.js';
 import { services } from '../../data/services.js';
-import { providers } from '../../data/providers.js';
 import blogService from '../../services/blogService.js';
+import providerService from '../../services/providerService.js';
+import { buildOrganizationSchema, buildWebSiteSchema } from '../../utils/seo.js';
 
 // Subcomponents
 import HeroSearch from '../../components/marketplace/HeroSearch.jsx';
@@ -37,11 +38,46 @@ export default function HomePage() {
     description:
       'Dealsathi connects customers looking for services with verified professionals across Home & Construction, Events, Business, Digital, and Education.',
     canonical: 'https://dealsathi.in/',
+    jsonLd: [buildOrganizationSchema(), buildWebSiteSchema()],
   });
 
-  // State for Blog Section (API fetch with graceful offline/dev fallback)
+  // State for Featured Verified Providers (live backend query)
+  const [featuredProviders, setFeaturedProviders] = useState([]);
+  const [providerStatus, setProviderStatus] = useState('loading'); // 'loading' | 'success' | 'empty' | 'error'
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProviders() {
+      try {
+        const response = await providerService.getProviders({ page: 1, limit: 3 });
+        if (!isMounted) return;
+        const list = Array.isArray(response?.data)
+          ? response.data.filter((p) => !p.isDevSample)
+          : [];
+        if (list.length > 0) {
+          setFeaturedProviders(list);
+          setProviderStatus('success');
+        } else {
+          setFeaturedProviders([]);
+          setProviderStatus('empty');
+        }
+      } catch {
+        if (!isMounted) return;
+        setFeaturedProviders([]);
+        setProviderStatus('error');
+      }
+    }
+
+    loadProviders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // State for Blog Section (live backend query)
   const [blogs, setBlogs] = useState([]);
-  const [blogStatus, setBlogStatus] = useState('loading'); // 'loading' | 'success' | 'empty' | 'fallback'
+  const [blogStatus, setBlogStatus] = useState('loading'); // 'loading' | 'success' | 'empty' | 'error'
 
   useEffect(() => {
     let isMounted = true;
@@ -51,16 +87,26 @@ export default function HomePage() {
         const response = await blogService.getBlogs({ page: 1, limit: 3 });
         if (!isMounted) return;
 
-        if (response && response.data && response.data.length > 0) {
-          setBlogs(response.data);
+        const fetchedBlogs = Array.isArray(response?.data?.blogs)
+          ? response.data.blogs
+          : Array.isArray(response?.data)
+          ? response.data
+          : [];
+
+        if (response?.success && fetchedBlogs.length > 0) {
+          setBlogs(fetchedBlogs);
           setBlogStatus('success');
+        } else if (response?.success) {
+          setBlogs([]);
+          setBlogStatus('empty');
         } else {
-          setBlogStatus('fallback');
+          setBlogs([]);
+          setBlogStatus('error');
         }
-      } catch (err) {
+      } catch {
         if (!isMounted) return;
-        // Expected during Phase 2 before Express server deployment
-        setBlogStatus('fallback');
+        setBlogs([]);
+        setBlogStatus('error');
       }
     }
 
@@ -71,6 +117,9 @@ export default function HomePage() {
     };
   }, []);
 
+  const normalizeAuthorName = (name) =>
+    (name ? String(name).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : 'Dealsathi Advisory');
+
   // Popular search suggestions
   const popularSearches = [
     { label: 'Interior Design', query: 'Interior Design' },
@@ -78,40 +127,6 @@ export default function HomePage() {
     { label: 'Wedding Planning', query: 'Wedding Planning' },
     { label: 'Website Development', query: 'Website Development' },
     { label: 'Commercial Property', query: 'Commercial Property' },
-  ];
-
-  // Development sample blog preview articles
-  const fallbackArticles = [
-    {
-      id: 'art-01',
-      slug: 'interior-design-cost-guide-india',
-      title: 'How Much Does Interior Design Actually Cost in India? (2026 Breakdown)',
-      excerpt:
-        'A transparent guide to turnkey residential interior design rates across Mumbai, Delhi, Bengaluru, and Pune.',
-      category: 'Home & Construction',
-      readingTime: '5 min read',
-      publishedAt: 'November 2026',
-    },
-    {
-      id: 'art-02',
-      slug: 'questions-to-ask-wedding-planner',
-      title: '10 Crucial Questions Every Couple Must Ask Before Hiring a Wedding Planner',
-      excerpt:
-        'Avoid surprise line-item fees, vendor conflicts, and day-of delays with this essential hiring checklist.',
-      category: 'Events & Lifestyle',
-      readingTime: '4 min read',
-      publishedAt: 'November 2026',
-    },
-    {
-      id: 'art-03',
-      slug: 'hiring-web-development-agency-checklist',
-      title: 'Building Your First Business Website: Scope, Ownership & Milestones',
-      excerpt:
-        'Why code ownership, Core Web Vitals, and milestone-based payments matter before hiring a software developer.',
-      category: 'Digital & Professional Services',
-      readingTime: '6 min read',
-      publishedAt: 'November 2026',
-    },
   ];
 
   return (
@@ -251,14 +266,9 @@ export default function HomePage() {
         <div className="container-max">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-12 gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                  Verified Network
-                </span>
-                <span className="text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300/80">
-                  Development Preview
-                </span>
-              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-accent mb-2 block">
+                Verified Network
+              </span>
               <h2
                 id="providers-heading"
                 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary tracking-tight"
@@ -275,29 +285,30 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Development Notice Banner */}
-          <div className="mb-8 p-4 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <p className="font-bold">Provider Onboarding Transparency Notice</p>
-              <p className="mt-0.5 text-amber-800 leading-relaxed">
-                The listings below represent structured development placeholder profiles. In production, providers are published strictly after manual KYC verification, credentials check, and written consent. Zero fake reviews or ratings are generated.
-              </p>
-            </div>
-          </div>
-
           {/* Providers Grid */}
-          {providers && providers.length > 0 ? (
+          {providerStatus === 'loading' && (
+            <div className="py-12 flex justify-center">
+              <LoadingSpinner size="md" label="Loading verified providers..." />
+            </div>
+          )}
+
+          {providerStatus === 'success' && featuredProviders.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {providers.map((provider) => (
-                <ProviderCard key={provider.id} provider={provider} />
+              {featuredProviders.map((provider) => (
+                <ProviderCard key={provider._id || provider.id || provider.slug} provider={provider} />
               ))}
             </div>
-          ) : (
+          )}
+
+          {(providerStatus === 'empty' || providerStatus === 'error') && (
             <EmptyState
               icon={Building}
-              title="No providers published yet"
-              description="We are currently onboarding verified local contractors and specialists. Submit an enquiry and our team will match you directly."
+              title={
+                providerStatus === 'error'
+                  ? 'Unable to load providers right now'
+                  : 'Verified providers onboarding in progress'
+              }
+              description="Submit your service requirement and our operations team will verify and match you directly with qualified specialists."
               actionLabel="Submit an Enquiry"
               actionHref="/get-quote"
             />
@@ -369,7 +380,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="pt-4 border-t border-border/60 flex items-center justify-between text-xs text-text-muted">
-                    <span>{article.author?.name || article.author || 'Dealsathi Advisory'}</span>
+                    <span>{normalizeAuthorName(article.author?.name || article.author)}</span>
                     <Link
                       to={`/blog/${article.slug}`}
                       className="font-semibold text-accent hover:underline flex items-center gap-1"
@@ -382,57 +393,18 @@ export default function HomePage() {
             </div>
           )}
 
-          {blogStatus === 'fallback' && (
-            <div>
-              <div className="mb-6 p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center justify-between">
-                <span>
-                  💡 <strong>Development Preview:</strong> Displaying static editorial guides pending MongoDB Express API launch (Sprint 3).
-                </span>
-                <Link to="/blog" className="underline font-semibold hover:text-accent">
-                  View archive
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7">
-                {fallbackArticles.map((article) => (
-                  <article
-                    key={article.id}
-                    className="card-hover bg-white p-6 flex flex-col justify-between border-border/80"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <Badge variant="teal">{article.category}</Badge>
-                        <span className="text-[11px] text-text-muted flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-text-muted" aria-hidden="true" />
-                          <span>{article.readingTime}</span>
-                        </span>
-                      </div>
-                      <h3 className="text-base sm:text-lg font-bold text-primary mb-2 line-clamp-2">
-                        <Link to={`/blog/${article.slug}`} className="hover:text-accent transition-colors">
-                          {article.title}
-                        </Link>
-                      </h3>
-                      <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-4 line-clamp-3">
-                        {article.excerpt}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-border/60 flex items-center justify-between text-xs text-text-muted">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" aria-hidden="true" />
-                        <span>{article.publishedAt}</span>
-                      </span>
-                      <Link
-                        to={`/blog/${article.slug}`}
-                        className="font-semibold text-accent hover:underline flex items-center gap-1"
-                      >
-                        Read Article <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
+          {(blogStatus === 'empty' || blogStatus === 'error') && (
+            <EmptyState
+              icon={BookOpen}
+              title={
+                blogStatus === 'error'
+                  ? 'Editorial guides temporarily unavailable'
+                  : 'No published editorial guides yet'
+              }
+              description="Explore our marketplace categories or visit the editorial archive for hiring checklists and cost guides."
+              actionLabel="Visit Blog Archive"
+              actionHref="/blog"
+            />
           )}
         </div>
       </section>

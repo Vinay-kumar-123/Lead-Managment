@@ -4,14 +4,25 @@ import { defaultBlogs } from '../controllers/blogController.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
 
-const SITE_URL = 'https://konnevia.in';
 const SITE_NAME = 'Dealsathi';
 const DEFAULT_TITLE = 'Dealsathi — Discover. Connect. Get Things Done.';
 const DEFAULT_DESC = 'Pan-India service marketplace connecting customers with verified professionals across Home, Events, Business, Digital, and Education categories.';
-const DEFAULT_IMAGE = `${SITE_URL}/dealsathi-logo.png`;
 
 // Common search crawler / social bot User-Agent substrings
 const BOT_UA_REGEX = /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkshare|w3c_validator|whatsapp|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google-structured-data-testing-tool|petalbot/i;
+
+function resolveAssetUrl(rawUrl, siteUrl) {
+  const defaultImage = `${siteUrl}/dealsathi-logo.png`;
+  const trimmed = String(rawUrl || '').trim();
+  // Legacy /assets/blog/*.jpg placeholder files do not exist in frontend/public; fall back safely
+  if (!trimmed || /^\/assets\/blog\//i.test(trimmed)) {
+    return defaultImage;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `${siteUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+}
 
 function escapeHtml(unsafe) {
   if (!unsafe) return '';
@@ -31,6 +42,7 @@ export const renderController = {
    */
   async renderBlogPage(req, res, next) {
     try {
+      const siteUrl = env.siteUrl;
       const { slug } = req.params;
       const cleanSlug = (slug || '').toLowerCase().trim();
 
@@ -55,12 +67,12 @@ export const renderController = {
 <head>
   <meta charset="utf-8">
   <title>Article Not Found — ${SITE_NAME}</title>
-  <meta name="robots" content="noindex">
+  <meta name="robots" content="noindex, nofollow">
 </head>
 <body style="font-family:sans-serif;padding:40px;text-align:center;">
   <h1>Article Not Found</h1>
   <p>The requested editorial article "${escapeHtml(cleanSlug)}" was not found or is unpublished.</p>
-  <a href="${SITE_URL}/blog">Browse All Editorial Guides</a>
+  <a href="${siteUrl}/blog">Browse All Editorial Guides</a>
 </body>
 </html>`);
       }
@@ -68,10 +80,9 @@ export const renderController = {
       const rawTitle = blog.metaTitle || `${blog.title} — ${SITE_NAME} Insights`;
       const pageTitle = rawTitle.replace(/\bKONNEVIA\b/gi, SITE_NAME);
       const pageDescription = (blog.metaDescription || blog.excerpt || DEFAULT_DESC).replace(/\bKONNEVIA\b/gi, SITE_NAME);
-      const canonicalUrl = `${SITE_URL}/blog/${blog.slug}`;
-      const coverImage = blog.coverImage
-        ? (blog.coverImage.startsWith('http') ? blog.coverImage : `${SITE_URL}${blog.coverImage.startsWith('/') ? '' : '/'}${blog.coverImage}`)
-        : DEFAULT_IMAGE;
+      const canonicalUrl = `${siteUrl}/blog/${blog.slug}`;
+      const coverImage = resolveAssetUrl(blog.coverImage, siteUrl);
+      const logoUrl = `${siteUrl}/dealsathi-logo.png`;
 
       const authorName = (blog.author?.name || 'Dealsathi Editorial Staff').replace(/\bKONNEVIA\b/gi, SITE_NAME);
       const authorRole = blog.author?.role || 'Domain Contributor';
@@ -99,10 +110,10 @@ export const renderController = {
         publisher: {
           '@type': 'Organization',
           name: SITE_NAME,
-          url: SITE_URL,
+          url: siteUrl,
           logo: {
             '@type': 'ImageObject',
-            url: `${SITE_URL}/logo.svg`,
+            url: logoUrl,
           },
         },
         articleSection: blog.category,

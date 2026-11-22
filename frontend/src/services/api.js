@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+  'http://localhost:5000/api/v1';
 
 // Default request timeout in milliseconds (15s for file uploads or slow cold starts)
 const REQUEST_TIMEOUT_MS = 15_000;

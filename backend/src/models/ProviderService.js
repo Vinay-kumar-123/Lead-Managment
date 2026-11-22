@@ -1,4 +1,8 @@
 import mongoose from 'mongoose';
+import {
+  normalizeKeywords,
+  buildServiceSearchTokens,
+} from '../config/searchDictionary.js';
 
 const providerServiceSchema = new mongoose.Schema(
   {
@@ -84,6 +88,14 @@ const providerServiceSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    keywords: {
+      type: [String],
+      default: [],
+    },
+    searchTokens: {
+      type: [String],
+      default: [],
+    },
     serviceAreas: {
       type: [String],
       default: [],
@@ -141,9 +153,30 @@ const providerServiceSchema = new mongoose.Schema(
   }
 );
 
+providerServiceSchema.pre('save', function (next) {
+  this.keywords = normalizeKeywords(this.keywords);
+  this.searchTokens = buildServiceSearchTokens(this);
+  next();
+});
+
 providerServiceSchema.index({ providerId: 1, createdAt: -1 });
 providerServiceSchema.index({ providerId: 1, approvalStatus: 1, publicationStatus: 1 });
 providerServiceSchema.index({ providerId: 1, slug: 1 }, { unique: true });
+providerServiceSchema.index({
+  isDeleted: 1,
+  isActive: 1,
+  approvalStatus: 1,
+  publicationStatus: 1,
+  categorySlug: 1,
+  subcategorySlug: 1,
+});
+providerServiceSchema.index({
+  isDeleted: 1,
+  isActive: 1,
+  approvalStatus: 1,
+  publicationStatus: 1,
+  searchTokens: 1,
+});
 
 export const ProviderService = mongoose.model('ProviderService', providerServiceSchema);
 export default ProviderService;

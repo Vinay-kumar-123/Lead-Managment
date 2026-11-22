@@ -9,6 +9,8 @@ export default function AdminLoginPage() {
   usePageMeta({
     title: 'Owner Portal Login — Dealsathi',
     description: 'Restricted administrative portal for Dealsathi marketplace owner operations.',
+    canonical: null,
+    robots: 'noindex, nofollow',
   });
 
   const { login } = useAuth();

@@ -5,6 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
 import Badge from '../../components/common/Badge.jsx';
 import providerService from '../../services/providerService.js';
+import { buildBreadcrumbSchema, buildLocalBusinessSchema } from '../../utils/seo.js';
 import {
   MapPin,
   ShieldAlert,
@@ -40,14 +41,28 @@ export default function ProviderProfilePage() {
       });
   }, [slug]);
 
+  const providerSchemas = provider
+    ? [
+        buildBreadcrumbSchema([
+          { name: 'Providers', path: '/providers' },
+          { name: provider.businessName, path: `/providers/${provider.slug}` },
+        ]),
+        buildLocalBusinessSchema(provider),
+      ].filter(Boolean)
+    : null;
+
   usePageMeta({
     title: provider
       ? `${provider.businessName} — Dealsathi Partner Profile`
+      : isLoading
+      ? 'Loading Provider Profile — Dealsathi'
       : 'Provider Not Found — Dealsathi',
     description: provider
       ? provider.metaDescription || provider.description
       : 'The requested provider profile does not exist in the Dealsathi directory.',
-    canonical: provider ? `https://dealsathi.in/providers/${provider.slug}` : undefined,
+    canonical: provider ? `https://dealsathi.in/providers/${provider.slug}` : null,
+    robots: !isLoading && !provider ? 'noindex, nofollow' : null,
+    jsonLd: providerSchemas,
   });
 
   if (isLoading) {
@@ -84,6 +99,16 @@ export default function ProviderProfilePage() {
       .join('');
   };
 
+  const categoryDisplay = provider.categoryName || provider.category || 'Verified Service';
+  const locationDisplay =
+    provider.location || [provider.city, provider.state].filter(Boolean).join(', ') || 'India';
+  const servicesList =
+    (provider.servicesOffered && provider.servicesOffered.length > 0
+      ? provider.servicesOffered
+      : provider.services) || [];
+  const isVerifiedProvider =
+    provider.verificationStatus === 'verified' || provider.verificationStatus === 'VERIFIED';
+
   return (
     <div className="bg-background min-h-screen">
       {/* Top Banner & Breadcrumb */}
@@ -113,7 +138,11 @@ export default function ProviderProfilePage() {
 
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <Badge variant="teal">{provider.categoryName}</Badge>
+                  <Badge variant="teal">{categoryDisplay}</Badge>
+
+                  {provider.subcategory && (
+                    <Badge variant="navy">{provider.subcategory}</Badge>
+                  )}
 
                   {provider.isDevSample && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
@@ -122,7 +151,7 @@ export default function ProviderProfilePage() {
                     </span>
                   )}
 
-                  {provider.verificationStatus === 'verified' && (
+                  {isVerifiedProvider && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Manually Verified Partner</span>
@@ -136,7 +165,7 @@ export default function ProviderProfilePage() {
 
                 <p className="text-xs sm:text-sm text-text-muted flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-accent flex-shrink-0" aria-hidden="true" />
-                  <span>{provider.location}</span>
+                  <span>{locationDisplay}</span>
                 </p>
               </div>
             </div>
@@ -210,14 +239,14 @@ export default function ProviderProfilePage() {
             </section>
 
             {/* Services Offered */}
-            {provider.servicesOffered && provider.servicesOffered.length > 0 && (
+            {servicesList.length > 0 && (
               <section aria-labelledby="services-offered-heading" className="bg-white p-6 sm:p-8 rounded-2xl border border-border/80 shadow-xs">
                 <h2 id="services-offered-heading" className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-accent" aria-hidden="true" />
                   <span>Specialized Services & Scope</span>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {provider.servicesOffered.map((serviceName, idx) => (
+                  {servicesList.map((serviceName, idx) => (
                     <div
                       key={idx}
                       className="p-3.5 bg-slate-50/80 rounded-lg border border-border/60 text-xs sm:text-sm font-medium text-text-primary flex items-center gap-2.5"

@@ -5,6 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import Badge from '../../components/common/Badge.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
 import blogService from '../../services/blogService.js';
+import { buildBreadcrumbSchema } from '../../utils/seo.js';
 import {
   BookOpen,
   Search,
@@ -38,6 +39,7 @@ export default function BlogListPage() {
     title: 'Marketplace Guides, Insights & Hiring Advice — Dealsathi',
     description: 'Expert guides, line-item budgeting advice, and hiring checklists across Home & Construction, Events, Business, and Digital Services on Dealsathi.',
     canonical: 'https://dealsathi.in/blog',
+    jsonLd: buildBreadcrumbSchema([{ name: 'Blog & Guides', path: '/blog' }]),
   });
 
   // Fetch categories once on mount

@@ -34,7 +34,10 @@ export default function AdminProviderEditPage() {
     description: '',
     category: '',
     categorySlug: '',
+    subcategory: '',
+    subcategorySlug: '',
     services: '',
+    keywords: '',
     contactNumber: '',
     email: '',
     city: '',
@@ -74,7 +77,10 @@ export default function AdminProviderEditPage() {
             description: p.description || '',
             category: p.category || '',
             categorySlug: p.categorySlug || '',
+            subcategory: p.subcategory || '',
+            subcategorySlug: p.subcategorySlug || '',
             services: Array.isArray(p.services) ? p.services.join(', ') : '',
+            keywords: Array.isArray(p.keywords) ? p.keywords.join(', ') : '',
             contactNumber: p.contactNumber || '',
             email: p.email || '',
             city: p.city || '',
@@ -121,6 +127,7 @@ export default function AdminProviderEditPage() {
       const payload = {
         ...formData,
         services: formData.services.split(',').map((s) => s.trim()).filter(Boolean),
+        keywords: formData.keywords.split(',').map((s) => s.trim()).filter(Boolean),
         serviceAreas: formData.serviceAreas.split(',').map((s) => s.trim()).filter(Boolean),
       };
 
@@ -440,6 +447,8 @@ export default function AdminProviderEditPage() {
                         ...prev,
                         categorySlug: chosenSlug,
                         category: foundCat ? foundCat.name : prev.category,
+                        subcategory: '',
+                        subcategorySlug: '',
                       }));
                     }}
                     required
@@ -465,6 +474,52 @@ export default function AdminProviderEditPage() {
                     onChange={handleChange}
                     required
                     className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                    Primary Subcategory
+                  </label>
+                  <select
+                    name="subcategorySlug"
+                    value={formData.subcategorySlug}
+                    onChange={(e) => {
+                      const chosenSubSlug = e.target.value;
+                      const subs = getCategoryBySlug(formData.categorySlug)?.subcategories || [];
+                      const foundSub = subs.find((s) => s.slug === chosenSubSlug);
+                      setFormData((prev) => ({
+                        ...prev,
+                        subcategorySlug: chosenSubSlug,
+                        subcategory: foundSub ? foundSub.name : '',
+                      }));
+                    }}
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+                  >
+                    <option value="">None / General</option>
+                    {(getCategoryBySlug(formData.categorySlug)?.subcategories || [])
+                      .filter((s) => s.isActive !== false)
+                      .map((sub) => (
+                        <option key={sub.slug} value={sub.slug}>
+                          {sub.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                    Search Keywords (Comma-separated, max 15)
+                  </label>
+                  <input
+                    type="text"
+                    name="keywords"
+                    value={formData.keywords}
+                    onChange={handleChange}
+                    placeholder="e.g. Event Manager, Candid Wedding, Corporate Events"
+                    className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                 </div>
               </div>

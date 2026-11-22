@@ -99,8 +99,8 @@ async function run() {
     return true;
   });
 
-  await assert('Raw HTML contains canonical URL (https://konnevia.in/blog/...)', async () => {
-    if (!html.includes('<link rel="canonical" href="https://konnevia.in/blog/how-to-choose-interior-designer" />')) {
+  await assert('Raw HTML contains canonical URL (https://dealsathi.in/blog/...)', async () => {
+    if (!html.includes('<link rel="canonical" href="https://dealsathi.in/blog/how-to-choose-interior-designer" />')) {
       return 'Missing expected canonical URL';
     }
     return true;
@@ -111,8 +111,8 @@ async function run() {
       'property="og:type" content="article"',
       'property="og:title"',
       'property="og:description"',
-      'property="og:url" content="https://konnevia.in/blog/how-to-choose-interior-designer"',
-      'property="og:image"',
+      'property="og:url" content="https://dealsathi.in/blog/how-to-choose-interior-designer"',
+      'property="og:image" content="https://dealsathi.in/dealsathi-logo.png"',
       'property="article:published_time"',
       'property="article:author" content="Priya Sharma"',
     ];
@@ -199,26 +199,32 @@ async function run() {
     return true;
   });
 
-  await assert('Sitemap includes all primary static public pages', async () => {
+  await assert('Sitemap includes all primary static public pages, canonical categories, and active services', async () => {
     const expected = [
-      'https://konnevia.in/',
-      'https://konnevia.in/categories',
-      'https://konnevia.in/providers',
-      'https://konnevia.in/get-quote',
-      'https://konnevia.in/become-a-partner',
-      'https://konnevia.in/blog',
+      'https://dealsathi.in/',
+      'https://dealsathi.in/categories',
+      'https://dealsathi.in/categories/home-construction',
+      'https://dealsathi.in/categories/events-lifestyle',
+      'https://dealsathi.in/categories/business-property',
+      'https://dealsathi.in/categories/digital-professional',
+      'https://dealsathi.in/categories/education-career',
+      'https://dealsathi.in/services/interior-design',
+      'https://dealsathi.in/providers',
+      'https://dealsathi.in/get-quote',
+      'https://dealsathi.in/become-a-partner',
+      'https://dealsathi.in/blog',
     ];
     for (const url of expected) {
-      if (!sitemapXml.includes(`<loc>${url}</loc>`)) return `Missing static page: ${url}`;
+      if (!sitemapXml.includes(`<loc>${url}</loc>`)) return `Missing static/category/service page: ${url}`;
     }
     return true;
   });
 
   await assert('Sitemap dynamically includes all published articles with <lastmod>', async () => {
     const articles = [
-      'https://konnevia.in/blog/how-to-choose-interior-designer',
-      'https://konnevia.in/blog/wedding-event-budget-planning-guide',
-      'https://konnevia.in/blog/corporate-website-redesign-performance-checklist',
+      'https://dealsathi.in/blog/how-to-choose-interior-designer',
+      'https://dealsathi.in/blog/wedding-event-budget-planning-guide',
+      'https://dealsathi.in/blog/corporate-website-redesign-performance-checklist',
     ];
     for (const url of articles) {
       if (!sitemapXml.includes(`<loc>${url}</loc>`)) return `Missing published article: ${url}`;
@@ -280,7 +286,7 @@ async function run() {
 
     await assert('Newly published article automatically appears in dynamic sitemap', async () => {
       const res = await request('/sitemap.xml');
-      if (!res.data.includes(`https://konnevia.in/blog/${newPubSlug}`)) {
+      if (!res.data.includes(`https://dealsathi.in/blog/${newPubSlug}`)) {
         return 'Newly published article did not appear in sitemap';
       }
       return true;

@@ -5,6 +5,7 @@ import Provider from '../models/Provider.js';
 import ProviderService from '../models/ProviderService.js';
 import Lead from '../models/Lead.js';
 import categoryService, { createSlug, CANONICAL_MAIN_SLUGS } from './categoryService.js';
+import { normalizeKeywords } from '../config/searchDictionary.js';
 import { verifyGoogleIdToken } from './googleTokenVerifier.js';
 import { generateReferenceId, sanitizeString } from '../utils/referenceId.js';
 import env from '../config/env.js';
@@ -101,6 +102,7 @@ function sanitizeProviderForClient(provider) {
     subcategory: raw.subcategory || '',
     subcategorySlug: raw.subcategorySlug || '',
     services: Array.isArray(raw.services) ? raw.services : [],
+    keywords: Array.isArray(raw.keywords) ? raw.keywords : [],
     contactNumber: raw.contactNumber || '',
     email: raw.email || '',
     address: raw.address || '',
@@ -142,6 +144,7 @@ function sanitizeServiceForClient(svc) {
     priceAmount: raw.priceAmount ?? null,
     pricingModel: raw.pricingModel || 'custom_quote',
     deliverables: Array.isArray(raw.deliverables) ? raw.deliverables : [],
+    keywords: Array.isArray(raw.keywords) ? raw.keywords : [],
     serviceAreas: Array.isArray(raw.serviceAreas) ? raw.serviceAreas : [],
     estimatedDuration: raw.estimatedDuration || '',
     approvalStatus: raw.approvalStatus || 'PENDING',
@@ -301,6 +304,10 @@ async function validateAndExtractProfilePayload(rawBody, { isUpdate = false } = 
     } else {
       extracted.services = Array.from(new Set(cleanServices)).slice(0, 25);
     }
+  }
+
+  if (rawBody.keywords !== undefined) {
+    extracted.keywords = normalizeKeywords(rawBody.keywords);
   }
 
   // 6. City & Location Fields
@@ -544,6 +551,10 @@ async function validateAndExtractServicePayload(rawBody, provider, { isUpdate = 
         .filter(Boolean)
         .slice(0, 15);
     }
+  }
+
+  if (rawBody.keywords !== undefined) {
+    extracted.keywords = normalizeKeywords(rawBody.keywords);
   }
 
   if (rawBody.serviceAreas !== undefined) {
@@ -1096,6 +1107,7 @@ export const providerPortalService = {
         subcategory: extracted.subcategory || '',
         subcategorySlug: extracted.subcategorySlug || '',
         services: extracted.services,
+        keywords: extracted.keywords || [],
         contactNumber: extracted.contactNumber,
         email: account.email,
         address: extracted.address || '',
@@ -1282,6 +1294,7 @@ export const providerPortalService = {
       'subcategory',
       'subcategorySlug',
       'services',
+      'keywords',
       'contactNumber',
       'address',
       'city',
@@ -1543,6 +1556,7 @@ export const providerPortalService = {
         priceAmount: extracted.priceAmount ?? null,
         pricingModel: extracted.pricingModel || 'custom_quote',
         deliverables: extracted.deliverables || [],
+        keywords: extracted.keywords || [],
         serviceAreas: extracted.serviceAreas || [provider.city],
         estimatedDuration: extracted.estimatedDuration || '',
         approvalStatus: 'PENDING',
@@ -1666,6 +1680,7 @@ export const providerPortalService = {
         'priceAmount',
         'pricingModel',
         'deliverables',
+        'keywords',
         'serviceAreas',
         'estimatedDuration',
         'isActive',

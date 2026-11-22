@@ -1,4 +1,9 @@
 import mongoose from 'mongoose';
+import {
+  normalizeKeywords,
+  buildProviderSearchTokens,
+  buildProviderLocationTokens,
+} from '../config/searchDictionary.js';
 
 const providerSchema = new mongoose.Schema(
   {
@@ -51,6 +56,18 @@ const providerSchema = new mongoose.Schema(
       index: true,
     },
     services: {
+      type: [String],
+      default: [],
+    },
+    keywords: {
+      type: [String],
+      default: [],
+    },
+    searchTokens: {
+      type: [String],
+      default: [],
+    },
+    locationTokens: {
       type: [String],
       default: [],
     },
@@ -210,10 +227,22 @@ const providerSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for optimized public provider queries
+providerSchema.pre('save', function (next) {
+  this.keywords = normalizeKeywords(this.keywords);
+  this.searchTokens = buildProviderSearchTokens(this);
+  this.locationTokens = buildProviderLocationTokens(this);
+  next();
+});
+
+// Compound indexes for optimized public provider queries & search
+// Note: searchTokens and locationTokens are kept in SEPARATE compound indexes
+// because MongoDB forbids compound multikey indexes on two array fields.
 providerSchema.index({ verificationStatus: 1, publicationStatus: 1, categorySlug: 1 });
 providerSchema.index({ verificationStatus: 1, publicationStatus: 1, city: 1 });
 providerSchema.index({ isDeleted: 1, verificationStatus: 1, publicationStatus: 1 });
+providerSchema.index({ isDeleted: 1, verificationStatus: 1, publicationStatus: 1, subcategorySlug: 1, city: 1 });
+providerSchema.index({ isDeleted: 1, verificationStatus: 1, publicationStatus: 1, searchTokens: 1 });
+providerSchema.index({ isDeleted: 1, verificationStatus: 1, publicationStatus: 1, locationTokens: 1 });
 
 export const Provider = mongoose.model('Provider', providerSchema);
 export default Provider;

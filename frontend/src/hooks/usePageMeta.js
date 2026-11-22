@@ -1,27 +1,58 @@
 import { useEffect } from 'react';
-import { siteConfig } from '../utils/seo.js';
+import { siteConfig, resolveAbsoluteImageUrl } from '../utils/seo.js';
+
+const ARTICLE_META_PROPERTIES = [
+  'article:published_time',
+  'article:modified_time',
+  'article:author',
+  'article:section',
+  'article:tag',
+];
+
+function removeDynamicJsonLdScripts() {
+  document.querySelectorAll('script[data-schema="dynamic-jsonld"]').forEach((el) => el.remove());
+}
+
+function removeArticleMetaTags() {
+  ARTICLE_META_PROPERTIES.forEach((prop) => {
+    document.querySelectorAll(`meta[property="${prop}"]`).forEach((el) => el.remove());
+  });
+}
 
 /**
- * Custom hook to manage document title, core meta tags, Open Graph, Twitter Cards,
- * and JSON-LD structured data in client SPA.
+ * Custom hook to manage document title, core meta tags, robots directives,
+ * canonical URL, Open Graph, Twitter Cards, and JSON-LD structured data in client SPA.
  */
 export function usePageMeta({
   title,
   description,
   canonical,
+  robots = null,
   ogType = 'website',
   ogImage = '/dealsathi-logo.png',
   article = null,
   jsonLd = null,
 }) {
+  const serializedJsonLd = jsonLd ? JSON.stringify(jsonLd) : null;
+  const serializedArticle = article
+    ? JSON.stringify({
+        publishedAt: article.publishedAt || null,
+        updatedAt: article.updatedAt || null,
+        authorName: article.author?.name || null,
+        category: article.category || null,
+        tags: Array.isArray(article.tags) ? article.tags : [],
+      })
+    : null;
+
   useEffect(() => {
     // 1. Update Title
     const formattedTitle = title
-      ? (title.toLowerCase().includes(siteConfig.name.toLowerCase()) ? title : `${title} — ${siteConfig.name}`)
+      ? title.toLowerCase().includes(siteConfig.name.toLowerCase())
+        ? title
+        : `${title} — ${siteConfig.name}`
       : `${siteConfig.name} — ${siteConfig.tagline}`;
     document.title = formattedTitle;
 
-    // Helper to set/create <meta> tags by name or property
     const setMetaTag = (attr, key, content) => {
       if (!content) return;
       let el = document.querySelector(`meta[${attr}="${key}"]`);
@@ -37,74 +68,92 @@ export function usePageMeta({
     const metaDescContent = description || siteConfig.description;
     setMetaTag('name', 'description', metaDescContent);
 
-    // 3. Update Canonical URL
-    const canonicalHref = canonical || (typeof window !== 'undefined' ? window.location.href : siteConfig.url);
-    let linkCanonical = document.querySelector('link[rel="canonical"]');
-    if (!linkCanonical) {
-      linkCanonical = document.createElement('link');
-      linkCanonical.rel = 'canonical';
-      document.head.appendChild(linkCanonical);
+    // 3. Robots Directive (explicit noindex for private/error views; clean up on public views)
+    if (robots) {
+      setMetaTag('name', 'robots', robots);
+    } else {
+      document.querySelectorAll('meta[name="robots"]').forEach((el) => el.remove());
     }
-    linkCanonical.href = canonicalHref;
 
-    // 4. Open Graph Tags
+    // 4. Canonical URL (suppressed when canonical === null for error/private routes)
+    const existingCanonical = document.querySelector('link[rel="canonical"]');
+    let canonicalHref = null;
+    if (canonical === null) {
+      if (existingCanonical) existingCanonical.remove();
+      document.querySelectorAll('meta[property="og:url"]').forEach((el) => el.remove());
+    } else {
+      canonicalHref =
+        canonical ||
+        (typeof window !== 'undefined'
+          ? `${siteConfig.url}${window.location.pathname}`
+          : siteConfig.url);
+      let linkCanonical = existingCanonical;
+      if (!linkCanonical) {
+        linkCanonical = document.createElement('link');
+        linkCanonical.rel = 'canonical';
+        document.head.appendChild(linkCanonical);
+      }
+      linkCanonical.href = canonicalHref;
+      setMetaTag('property', 'og:url', canonicalHref);
+    }
+
+    // 5. Open Graph Tags
     setMetaTag('property', 'og:title', formattedTitle);
     setMetaTag('property', 'og:description', metaDescContent);
     setMetaTag('property', 'og:type', ogType);
-    setMetaTag('property', 'og:url', canonicalHref);
     setMetaTag('property', 'og:site_name', siteConfig.name);
-    
-    // Resolve absolute image URL if needed
-    const absoluteOgImage = ogImage.startsWith('http')
-      ? ogImage
-      : `${siteConfig.url}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
+
+    const absoluteOgImage = resolveAbsoluteImageUrl(ogImage);
     setMetaTag('property', 'og:image', absoluteOgImage);
 
-    // 5. Twitter Card Tags
+    // 6. Twitter Card Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');
     setMetaTag('name', 'twitter:title', formattedTitle);
     setMetaTag('name', 'twitter:description', metaDescContent);
     setMetaTag('name', 'twitter:image', absoluteOgImage);
 
-    // Article Specific OG Metadata if provided
-    if (article) {
-      if (article.publishedAt) {
-        setMetaTag('property', 'article:published_time', new Date(article.publishedAt).toISOString());
+    // 7. Article Specific OG Metadata
+    removeArticleMetaTags();
+    if (serializedArticle) {
+      const parsedArticle = JSON.parse(serializedArticle);
+      if (parsedArticle.publishedAt) {
+        setMetaTag('property', 'article:published_time', new Date(parsedArticle.publishedAt).toISOString());
       }
-      if (article.updatedAt) {
-        setMetaTag('property', 'article:modified_time', new Date(article.updatedAt).toISOString());
+      if (parsedArticle.updatedAt) {
+        setMetaTag('property', 'article:modified_time', new Date(parsedArticle.updatedAt).toISOString());
       }
-      if (article.author?.name) {
-        setMetaTag('property', 'article:author', article.author.name);
+      if (parsedArticle.authorName) {
+        setMetaTag('property', 'article:author', parsedArticle.authorName);
       }
-      if (article.category) {
-        setMetaTag('property', 'article:section', article.category);
+      if (parsedArticle.category) {
+        setMetaTag('property', 'article:section', parsedArticle.category);
       }
-      if (Array.isArray(article.tags)) {
-        article.tags.forEach((tag) => {
-          setMetaTag('property', 'article:tag', tag);
-        });
-      }
+      parsedArticle.tags.forEach((tag) => {
+        if (!tag) return;
+        const tagMeta = document.createElement('meta');
+        tagMeta.setAttribute('property', 'article:tag');
+        tagMeta.setAttribute('content', tag);
+        document.head.appendChild(tagMeta);
+      });
     }
 
-    // 6. JSON-LD Structured Data
-    let scriptJsonLd = document.querySelector('script[data-schema="dynamic-jsonld"]');
-    if (jsonLd) {
-      if (!scriptJsonLd) {
-        scriptJsonLd = document.createElement('script');
-        scriptJsonLd.type = 'application/ld+json';
-        scriptJsonLd.setAttribute('data-schema', 'dynamic-jsonld');
-        document.head.appendChild(scriptJsonLd);
-      }
-      scriptJsonLd.textContent = JSON.stringify(jsonLd);
-    } else if (scriptJsonLd) {
-      scriptJsonLd.remove();
+    // 8. JSON-LD Structured Data (supports single schema object or array of schemas)
+    removeDynamicJsonLdScripts();
+    if (serializedJsonLd) {
+      const parsedSchemas = JSON.parse(serializedJsonLd);
+      const schemaList = (Array.isArray(parsedSchemas) ? parsedSchemas : [parsedSchemas]).filter(Boolean);
+      schemaList.forEach((schemaObj) => {
+        const scriptEl = document.createElement('script');
+        scriptEl.type = 'application/ld+json';
+        scriptEl.setAttribute('data-schema', 'dynamic-jsonld');
+        scriptEl.textContent = JSON.stringify(schemaObj);
+        document.head.appendChild(scriptEl);
+      });
     }
 
     return () => {
-      // Optional cleanup on unmount: remove article tags or dynamic json-ld if navigating away
-      const dynamicSchema = document.querySelector('script[data-schema="dynamic-jsonld"]');
-      if (dynamicSchema) dynamicSchema.remove();
+      removeDynamicJsonLdScripts();
+      removeArticleMetaTags();
     };
-  }, [title, description, canonical, ogType, ogImage, article, jsonLd]);
+  }, [title, description, canonical, robots, ogType, ogImage, serializedArticle, serializedJsonLd]);
 }

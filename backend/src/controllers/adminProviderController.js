@@ -4,7 +4,8 @@ import ProviderService from '../models/ProviderService.js';
 import Blog from '../models/Blog.js';
 import ActivityLog from '../models/ActivityLog.js';
 import deletionService, { assertValidObjectId } from '../services/deletionService.js';
-import { escapeRegex } from '../services/categoryService.js';
+import { escapeRegex, createSlug as createCategorySlug } from '../services/categoryService.js';
+import { normalizeKeywords } from '../config/searchDictionary.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { logAdminActivity } from '../services/activityLogger.js';
 import logger from '../utils/logger.js';
@@ -430,7 +431,10 @@ export const adminProviderController = {
         'description',
         'category',
         'categorySlug',
+        'subcategory',
+        'subcategorySlug',
         'services',
+        'keywords',
         'contactNumber',
         'email',
         'address',
@@ -450,8 +454,18 @@ export const adminProviderController = {
 
       for (const key of allowedUpdates) {
         if (req.body[key] !== undefined) {
-          provider[key] = req.body[key];
+          if (key === 'keywords') {
+            provider.keywords = normalizeKeywords(req.body.keywords);
+          } else {
+            provider[key] = req.body[key];
+          }
         }
+      }
+
+      if (req.body.subcategory !== undefined && req.body.subcategorySlug === undefined) {
+        provider.subcategorySlug = req.body.subcategory
+          ? createCategorySlug(req.body.subcategory)
+          : '';
       }
 
       if (req.body.publicationStatus === 'PUBLISHED') {

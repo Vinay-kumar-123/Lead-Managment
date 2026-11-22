@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { usePageMeta } from '../../hooks/usePageMeta.js';
 import Breadcrumb from '../../components/common/Breadcrumb.jsx';
@@ -7,7 +7,8 @@ import ProviderCard from '../../components/marketplace/ProviderCard.jsx';
 import ServiceCard from '../../components/marketplace/ServiceCard.jsx';
 import Badge from '../../components/common/Badge.jsx';
 import { getServiceBySlug, services } from '../../data/services.js';
-import { providers } from '../../data/providers.js';
+import providerService from '../../services/providerService.js';
+import { buildBreadcrumbSchema } from '../../utils/seo.js';
 import {
   Layers,
   Hammer,
@@ -37,13 +38,51 @@ export default function ServiceDetailPage() {
 
   // Accordion state for FAQs
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [matchedProviders, setMatchedProviders] = useState([]);
+  const [providersLoading, setProvidersLoading] = useState(Boolean(service));
+
+  useEffect(() => {
+    if (!service) {
+      setMatchedProviders([]);
+      setProvidersLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setProvidersLoading(true);
+    providerService
+      .getProviders({ categorySlug: service.categorySlug, search: service.name, limit: 6 })
+      .then((res) => {
+        if (!isMounted) return;
+        const list = Array.isArray(res?.data) ? res.data.filter((p) => !p.isDevSample) : [];
+        setMatchedProviders(list);
+      })
+      .catch(() => {
+        if (isMounted) setMatchedProviders([]);
+      })
+      .finally(() => {
+        if (isMounted) setProvidersLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [service?.slug, service?.categorySlug, service?.name]);
 
   usePageMeta({
     title: service ? `${service.name} Services — Dealsathi` : 'Service Not Found — Dealsathi',
     description: service
       ? service.metaDescription || service.description
       : 'The requested service does not exist in the Dealsathi catalog.',
-    canonical: service ? `https://dealsathi.in/services/${service.slug}` : undefined,
+    canonical: service ? `https://dealsathi.in/services/${service.slug}` : null,
+    robots: service ? null : 'noindex, nofollow',
+    jsonLd: service
+      ? buildBreadcrumbSchema([
+          { name: 'Categories', path: '/categories' },
+          { name: service.categoryName, path: `/categories/${service.categorySlug}` },
+          { name: service.name, path: `/services/${service.slug}` },
+        ])
+      : null,
   });
 
   if (!service) {
@@ -61,13 +100,6 @@ export default function ServiceDetailPage() {
   }
 
   const IconComponent = iconMap[service.icon] || Layers;
-
-  // Filter providers that offer this service
-  const matchedProviders = providers.filter(
-    (p) =>
-      p.mainService.toLowerCase() === service.name.toLowerCase() ||
-      p.servicesOffered.some((s) => s.toLowerCase().includes(service.name.toLowerCase()))
-  );
 
   // Related services in the same category
   const relatedServices = services.filter(
@@ -262,10 +294,15 @@ export default function ServiceDetailPage() {
             </Link>
           </div>
 
-          {matchedProviders.length > 0 ? (
+          {providersLoading ? (
+            <div className="py-10 text-center">
+              <div className="w-7 h-7 border-3 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-text-muted">Loading verified providers...</p>
+            </div>
+          ) : matchedProviders.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {matchedProviders.map((provider) => (
-                <ProviderCard key={provider.id} provider={provider} />
+                <ProviderCard key={provider._id || provider.id || provider.slug} provider={provider} />
               ))}
             </div>
           ) : (

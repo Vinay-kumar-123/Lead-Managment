@@ -7,8 +7,8 @@ import EmptyState from '../../components/common/EmptyState.jsx';
 import ServiceCard from '../../components/marketplace/ServiceCard.jsx';
 import ProviderCard from '../../components/marketplace/ProviderCard.jsx';
 import { getServicesByCategory } from '../../data/services.js';
-import { getProvidersByCategory } from '../../data/providers.js';
 import providerService from '../../services/providerService.js';
+import { buildBreadcrumbSchema } from '../../utils/seo.js';
 import {
   Home,
   Camera,
@@ -36,21 +36,24 @@ export default function CategoryDetailPage() {
   const { getCategoryBySlug } = useCategories();
   const category = getCategoryBySlug(slug);
 
-  const [categoryProviders, setCategoryProviders] = useState(() =>
-    category ? getProvidersByCategory(category.slug) : []
-  );
+  const [categoryProviders, setCategoryProviders] = useState([]);
 
   useEffect(() => {
-    if (!category) return;
+    if (!category) {
+      setCategoryProviders([]);
+      return;
+    }
     let isMounted = true;
     providerService
       .getProviders({ categorySlug: category.slug })
       .then((res) => {
         if (isMounted && Array.isArray(res?.data)) {
-          setCategoryProviders(res.data);
+          setCategoryProviders(res.data.filter((p) => !p.isDevSample));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (isMounted) setCategoryProviders([]);
+      });
 
     return () => {
       isMounted = false;
@@ -62,7 +65,14 @@ export default function CategoryDetailPage() {
     description: category
       ? category.metaDescription || category.description
       : 'The requested category does not exist in the Dealsathi marketplace directory.',
-    canonical: category ? `https://dealsathi.in/categories/${category.slug}` : undefined,
+    canonical: category ? `https://dealsathi.in/categories/${category.slug}` : null,
+    robots: category ? null : 'noindex, nofollow',
+    jsonLd: category
+      ? buildBreadcrumbSchema([
+          { name: 'Categories', path: '/categories' },
+          { name: category.name, path: `/categories/${category.slug}` },
+        ])
+      : null,
   });
 
   if (!category) {
@@ -167,7 +177,7 @@ export default function CategoryDetailPage() {
                   </div>
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <Link
-                      to={`/providers?category=${encodeURIComponent(category.slug)}&search=${encodeURIComponent(sub.name)}`}
+                      to={`/providers?category=${encodeURIComponent(category.slug)}&subcategory=${encodeURIComponent(sub.slug)}`}
                       className="text-xs font-semibold text-accent hover:text-accent-600 inline-flex items-center gap-1"
                     >
                       <span>View Providers</span>

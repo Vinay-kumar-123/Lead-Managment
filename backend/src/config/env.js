@@ -23,6 +23,7 @@ for (const envPath of candidateEnvPaths) {
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
+const rawSiteUrl = (process.env.SITE_URL || 'https://dealsathi.in').trim().replace(/\/+$/, '');
 
 export const env = {
   port: parseInt(process.env.PORT, 10) || 5000,
@@ -30,6 +31,7 @@ export const env = {
   isProduction,
   isDevelopment: nodeEnv === 'development',
   isTest: nodeEnv === 'test',
+  siteUrl: rawSiteUrl || 'https://dealsathi.in',
   mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/konnevia',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000',
 

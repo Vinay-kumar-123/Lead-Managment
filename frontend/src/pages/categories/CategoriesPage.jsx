@@ -4,6 +4,7 @@ import Breadcrumb from '../../components/common/Breadcrumb.jsx';
 import SectionHeading from '../../components/common/SectionHeading.jsx';
 import CategoryCard from '../../components/marketplace/CategoryCard.jsx';
 import { useCategories } from '../../hooks/useCategories.js';
+import { buildBreadcrumbSchema } from '../../utils/seo.js';
 import { ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +15,7 @@ export default function CategoriesPage() {
     title: 'Marketplace Service Categories — Dealsathi',
     description: 'Explore verified service categories across Home & Construction, Events & Lifestyle, Business & Property, Digital & Professional, and Education on Dealsathi.',
     canonical: 'https://dealsathi.in/categories',
+    jsonLd: buildBreadcrumbSchema([{ name: 'Categories', path: '/categories' }]),
   });
 
   return (

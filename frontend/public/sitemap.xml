@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://konnevia.in/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://konnevia.in/categories</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://konnevia.in/providers</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://konnevia.in/get-quote</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://konnevia.in/become-a-partner</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://konnevia.in/blog</loc><priority>0.8</priority><changefreq>daily</changefreq></url>
-  <url><loc>https://konnevia.in/about</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://konnevia.in/contact</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://konnevia.in/privacy-policy</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
-  <url><loc>https://konnevia.in/terms</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://dealsathi.in/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories/home-construction</loc><priority>0.85</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories/events-lifestyle</loc><priority>0.85</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories/business-property</loc><priority>0.85</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories/digital-professional</loc><priority>0.85</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/categories/education-career</loc><priority>0.85</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/services/interior-design</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/services/home-renovation</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/services/wedding-planning</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/services/website-development</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/providers</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://dealsathi.in/get-quote</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/become-a-partner</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/blog</loc><priority>0.8</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://dealsathi.in/about</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/contact</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://dealsathi.in/privacy-policy</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://dealsathi.in/terms</loc><priority>0.4</priority><changefreq>yearly</changefreq></url>
 </urlset>

@@ -6,6 +6,7 @@ import Badge from '../../components/common/Badge.jsx';
 import EmptyState from '../../components/common/EmptyState.jsx';
 import blogService from '../../services/blogService.js';
 import { getServiceBySlug } from '../../data/services.js';
+import { buildBreadcrumbSchema, resolveAbsoluteImageUrl } from '../../utils/seo.js';
 import {
   Clock,
   Calendar,
@@ -30,48 +31,64 @@ export default function BlogDetailPage() {
   // Normalize any legacy KONNEVIA strings in stored database article metadata
   const normalizeBrandText = (str) => (str ? String(str).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : str);
 
-  // Dynamic meta tags & Article JSON-LD Structured Data
-  const articleCanonical = article ? `https://dealsathi.in/blog/${article.slug}` : undefined;
+  // Dynamic meta tags & Article + BreadcrumbList JSON-LD Structured Data
+  const articleCanonical = article ? `https://dealsathi.in/blog/${article.slug}` : null;
+  const resolvedArticleImage = resolveAbsoluteImageUrl(article?.coverImage);
   const articleJsonLd = article
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: normalizeBrandText(article.metaTitle || article.title),
-        description: normalizeBrandText(article.metaDescription || article.excerpt),
-        image: article.coverImage
-          ? (article.coverImage.startsWith('http') ? article.coverImage : `https://dealsathi.in${article.coverImage.startsWith('/') ? '' : '/'}${article.coverImage}`)
-          : 'https://dealsathi.in/dealsathi-logo.png',
-        datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined,
-        dateModified: article.updatedAt ? new Date(article.updatedAt).toISOString() : (article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined),
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': articleCanonical,
-        },
-        author: {
-          '@type': 'Person',
-          name: normalizeBrandText(article.author?.name || 'Dealsathi Editorial Team'),
-          jobTitle: article.author?.role || 'Editorial Specialist',
-        },
-        publisher: {
-          '@type': 'Organization',
-          name: 'Dealsathi',
-          url: 'https://dealsathi.in',
-          logo: {
-            '@type': 'ImageObject',
-            url: 'https://dealsathi.in/dealsathi-logo.png',
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: normalizeBrandText(article.metaTitle || article.title),
+          description: normalizeBrandText(article.metaDescription || article.excerpt),
+          image: resolvedArticleImage,
+          datePublished: article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined,
+          dateModified: article.updatedAt
+            ? new Date(article.updatedAt).toISOString()
+            : article.publishedAt
+            ? new Date(article.publishedAt).toISOString()
+            : undefined,
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': articleCanonical,
           },
+          author: {
+            '@type': 'Person',
+            name: normalizeBrandText(article.author?.name || 'Dealsathi Editorial Team'),
+            jobTitle: article.author?.role || 'Editorial Specialist',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Dealsathi',
+            url: 'https://dealsathi.in',
+            logo: {
+              '@type': 'ImageObject',
+              url: 'https://dealsathi.in/dealsathi-logo.png',
+            },
+          },
+          articleSection: article.category,
+          keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
         },
-        articleSection: article.category,
-        keywords: Array.isArray(article.tags) ? article.tags.join(', ') : undefined,
-      }
+        buildBreadcrumbSchema([
+          { name: 'Blog & Guides', path: '/blog' },
+          { name: article.title, path: `/blog/${article.slug}` },
+        ]),
+      ]
     : null;
 
   usePageMeta({
-    title: article ? normalizeBrandText(article.metaTitle || article.title) : 'Editorial Guide',
-    description: article ? normalizeBrandText(article.metaDescription || article.excerpt) : 'Editorial guide and service checklist on Dealsathi.',
+    title: article
+      ? normalizeBrandText(article.metaTitle || article.title)
+      : notFound
+      ? 'Article Not Found'
+      : 'Editorial Guide',
+    description: article
+      ? normalizeBrandText(article.metaDescription || article.excerpt)
+      : 'Editorial guide and service checklist on Dealsathi.',
     canonical: articleCanonical,
-    ogType: 'article',
-    ogImage: article?.coverImage || '/dealsathi-logo.png',
+    robots: notFound ? 'noindex, nofollow' : null,
+    ogType: article ? 'article' : 'website',
+    ogImage: resolvedArticleImage,
     article: article,
     jsonLd: articleJsonLd,
   });

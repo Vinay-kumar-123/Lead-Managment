@@ -8,6 +8,8 @@ export default function NotFoundPage() {
   usePageMeta({
     title: 'Page Not Found (404)',
     description: 'The requested page could not be found on Dealsathi.',
+    canonical: null,
+    robots: 'noindex, nofollow',
   });
 
   return (

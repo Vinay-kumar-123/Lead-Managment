@@ -133,6 +133,8 @@ export default function ProviderDashboardPage() {
     title: `${provider?.businessName || 'Provider'} — Partner Dashboard — Dealsathi`,
     description:
       'Manage your Dealsathi business profile, service packages, listings, and customer enquiries.',
+    canonical: null,
+    robots: 'noindex, nofollow',
   });
 
   const hydrateProfileForm = useCallback((prov) => {

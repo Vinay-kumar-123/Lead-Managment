@@ -15,6 +15,16 @@ export default function ProviderCard({ provider }) {
       .join('');
   };
 
+  const displayLocation =
+    provider.location ||
+    [provider.city, provider.state].filter(Boolean).join(', ') ||
+    'Pan-India';
+
+  const displayServices =
+    (provider.servicesOffered && provider.servicesOffered.length > 0
+      ? provider.servicesOffered
+      : provider.services) || [];
+
   return (
     <div className="card-hover bg-white p-5 sm:p-6 flex flex-col justify-between h-full border-border/80">
       <div>
@@ -34,15 +44,21 @@ export default function ProviderCard({ provider }) {
               </h3>
               <p className="text-xs text-text-muted flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3.5 h-3.5 text-accent flex-shrink-0" aria-hidden="true" />
-                <span className="truncate">{provider.location || provider.city}</span>
+                <span className="truncate">{displayLocation}</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Labels: Primary Service + Dev Sample Indicator */}
+        {/* Labels: Primary Service / Subcategory + Verification Status */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Badge variant="navy">{provider.mainService || provider.category}</Badge>
+          <Badge variant="navy">{provider.mainService || provider.subcategory || provider.category}</Badge>
+
+          {provider.subcategory && provider.category && provider.subcategory !== provider.category && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-text-primary border border-border/70">
+              {provider.category}
+            </span>
+          )}
 
           {provider.isDevSample && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
@@ -64,15 +80,14 @@ export default function ProviderCard({ provider }) {
           {provider.description}
         </p>
 
-        {/* Services / Tags Offered */}
-        {((provider.servicesOffered && provider.servicesOffered.length > 0) ||
-          (provider.services && provider.services.length > 0)) && (
+        {/* Services / Matched Packages Offered */}
+        {displayServices.length > 0 && (
           <div className="mb-4">
             <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider block mb-1.5">
               Services Offered:
             </span>
             <div className="flex flex-wrap gap-1">
-              {(provider.servicesOffered || provider.services).slice(0, 3).map((item, idx) => (
+              {displayServices.slice(0, 3).map((item, idx) => (
                 <span
                   key={idx}
                   className="text-[11px] font-medium text-text-primary/85 bg-slate-100 px-2 py-0.5 rounded"
@@ -82,6 +97,12 @@ export default function ProviderCard({ provider }) {
               ))}
             </div>
           </div>
+        )}
+
+        {provider.searchMeta?.matchedServices?.length > 0 && (
+          <p className="text-[11px] text-accent-700 font-medium mb-3 line-clamp-1">
+            Matches: {provider.searchMeta.matchedServices.slice(0, 2).join(' · ')}
+          </p>
         )}
       </div>
 

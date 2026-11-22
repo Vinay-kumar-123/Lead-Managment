@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { usePageMeta } from '../../hooks/usePageMeta.js';
 import BrandLogo from '../common/BrandLogo.jsx';
 import {
   LayoutDashboard,
@@ -19,6 +20,13 @@ import {
 } from 'lucide-react';
 
 export default function AdminLayout({ children, title, subtitle }) {
+  usePageMeta({
+    title: title ? `${title} — Dealsathi Admin` : 'Admin Portal — Dealsathi',
+    description: 'Private administrative workspace for Dealsathi operations.',
+    canonical: null,
+    robots: 'noindex, nofollow',
+  });
+
   const { admin, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
