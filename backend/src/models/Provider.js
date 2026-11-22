@@ -38,9 +38,42 @@ const providerSchema = new mongoose.Schema(
       lowercase: true,
       index: true,
     },
+    subcategory: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    subcategorySlug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: '',
+      index: true,
+    },
     services: {
       type: [String],
       default: [],
+    },
+    accountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProviderAccount',
+      default: null,
+      index: true,
+    },
+    googleSub: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
+    experienceYears: {
+      type: Number,
+      default: 0,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: '',
     },
     contactNumber: {
       type: String,

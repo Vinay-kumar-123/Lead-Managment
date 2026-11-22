@@ -3,6 +3,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout.jsx';
 import LoadingSpinner from '../components/common/LoadingSpinner.jsx';
 import ProtectedRoute from '../components/admin/ProtectedRoute.jsx';
+import ProviderProtectedRoute from '../components/provider/ProviderProtectedRoute.jsx';
 
 // Lazy-loaded public page bundles
 const HomePage = lazy(() => import('../pages/home/HomePage.jsx'));
@@ -34,6 +35,9 @@ const AdminBlogsPage = lazy(() => import('../pages/admin/AdminBlogsPage.jsx'));
 const AdminBlogEditorPage = lazy(() => import('../pages/admin/AdminBlogEditorPage.jsx'));
 const AdminActivityLogsPage = lazy(() => import('../pages/admin/AdminActivityLogsPage.jsx'));
 const AdminSettingsPage = lazy(() => import('../pages/admin/AdminSettingsPage.jsx'));
+
+// Lazy-loaded Provider Portal bundle
+const ProviderDashboardPage = lazy(() => import('../pages/provider/ProviderDashboardPage.jsx'));
 
 function PageFallback() {
   return (
@@ -171,6 +175,24 @@ export default function AppRoutes() {
             <ProtectedRoute>
               <AdminSettingsPage />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Standalone Provider Portal Routes (No customer Navbar/Footer) */}
+        <Route
+          path="/provider"
+          element={
+            <ProviderProtectedRoute>
+              <ProviderDashboardPage />
+            </ProviderProtectedRoute>
+          }
+        />
+        <Route
+          path="/provider/dashboard"
+          element={
+            <ProviderProtectedRoute>
+              <ProviderDashboardPage />
+            </ProviderProtectedRoute>
           }
         />
       </Routes>

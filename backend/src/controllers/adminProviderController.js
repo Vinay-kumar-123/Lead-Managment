@@ -1,5 +1,6 @@
 import Lead from '../models/Lead.js';
 import Provider from '../models/Provider.js';
+import ProviderService from '../models/ProviderService.js';
 import Blog from '../models/Blog.js';
 import ActivityLog from '../models/ActivityLog.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
@@ -200,14 +201,43 @@ export const adminProviderController = {
         });
 
         await provider.save();
+
+      if (provider.verificationStatus === 'VERIFIED') {
+        const svcUpdate = { approvalStatus: 'APPROVED', rejectionReason: '' };
+        if (provider.publicationStatus === 'PUBLISHED') {
+          svcUpdate.publicationStatus = 'PUBLISHED';
+        }
+        await ProviderService.updateMany(
+          { providerId: provider._id, approvalStatus: 'PENDING' },
+          { $set: svcUpdate }
+        );
+      }
       } else {
         provider.verificationStatus = 'VERIFIED';
+        provider.rejectionReason = '';
         provider.verifiedAt = new Date();
         if (application.shopImage?.url && !provider.shopImage?.url) {
           provider.shopImage = application.shopImage;
         }
         await provider.save();
+
+      if (provider.verificationStatus === 'VERIFIED') {
+        const svcUpdate = { approvalStatus: 'APPROVED', rejectionReason: '' };
+        if (provider.publicationStatus === 'PUBLISHED') {
+          svcUpdate.publicationStatus = 'PUBLISHED';
+        }
+        await ProviderService.updateMany(
+          { providerId: provider._id, approvalStatus: 'PENDING' },
+          { $set: svcUpdate }
+        );
       }
+      }
+
+      // Approve any pending services belonging to this provider
+      await ProviderService.updateMany(
+        { providerId: provider._id, approvalStatus: 'PENDING' },
+        { $set: { approvalStatus: 'APPROVED', rejectionReason: '' } }
+      );
 
       await logAdminActivity({
         adminEmail: req.admin?.email,
@@ -253,11 +283,25 @@ export const adminProviderController = {
       application.metadata.set('rejectedAt', new Date().toISOString());
       await application.save();
 
-      // Revoke any existing provider record
-      await Provider.updateOne(
-        { sourceApplicationId: application._id },
-        { verificationStatus: 'REVOKED', publicationStatus: 'ARCHIVED' }
-      );
+      // Revoke any existing provider record and record rejection reason
+      const linkedProv = await Provider.findOne({ sourceApplicationId: application._id });
+      if (linkedProv) {
+        linkedProv.verificationStatus = 'REVOKED';
+        linkedProv.publicationStatus = 'ARCHIVED';
+        linkedProv.rejectionReason = reason.trim();
+        await linkedProv.save();
+
+        await ProviderService.updateMany(
+          { providerId: linkedProv._id },
+          {
+            $set: {
+              approvalStatus: 'REJECTED',
+              publicationStatus: 'ARCHIVED',
+              rejectionReason: reason.trim(),
+            },
+          }
+        );
+      }
 
       await logAdminActivity({
         adminEmail: req.admin?.email,
@@ -367,6 +411,17 @@ export const adminProviderController = {
       }
 
       await provider.save();
+
+      if (provider.verificationStatus === 'VERIFIED') {
+        const svcUpdate = { approvalStatus: 'APPROVED', rejectionReason: '' };
+        if (provider.publicationStatus === 'PUBLISHED') {
+          svcUpdate.publicationStatus = 'PUBLISHED';
+        }
+        await ProviderService.updateMany(
+          { providerId: provider._id, approvalStatus: 'PENDING' },
+          { $set: svcUpdate }
+        );
+      }
 
       await logAdminActivity({
         adminEmail: req.admin?.email,

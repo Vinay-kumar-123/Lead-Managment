@@ -19,10 +19,14 @@ async function request(endpoint, options = {}) {
   const timeoutMs = options.timeoutMs || REQUEST_TIMEOUT_MS;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  // Retrieve stored admin session token if available
+  // Retrieve stored admin or provider session token depending on endpoint namespace
   let authToken = null;
+  let providerToken = null;
   try {
-    authToken = localStorage.getItem('dealsathi_admin_token') || localStorage.getItem('konnevia_admin_token');
+    authToken =
+      localStorage.getItem('dealsathi_admin_token') ||
+      localStorage.getItem('konnevia_admin_token');
+    providerToken = localStorage.getItem('dealsathi_provider_token');
   } catch {
     // LocalStorage inaccessible (e.g. strict private browsing)
   }
@@ -33,7 +37,14 @@ async function request(endpoint, options = {}) {
     defaultHeaders['Content-Type'] = 'application/json';
   }
 
-  if (authToken && !options.headers?.Authorization && !options.headers?.authorization) {
+  const isProviderPortalRequest =
+    endpoint.startsWith('/provider/') || endpoint === '/provider';
+
+  if (isProviderPortalRequest) {
+    if (providerToken && !options.headers?.['x-provider-token']) {
+      defaultHeaders['x-provider-token'] = providerToken;
+    }
+  } else if (authToken && !options.headers?.Authorization && !options.headers?.authorization) {
     defaultHeaders['Authorization'] = `Bearer ${authToken}`;
   }
 

@@ -19,14 +19,23 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com', 'https://images.unsplash.com'],
+        frameSrc: ["'self'", 'https://accounts.google.com'],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://res.cloudinary.com',
+          'https://images.unsplash.com',
+          'https://*.googleusercontent.com',
+        ],
         connectSrc: ["'self'", '*'],
       },
     },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
@@ -54,11 +63,13 @@ app.use(
       if (allowedOrigins.includes(cleanOrigin)) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS blocked request from origin: ${origin}`));
+      const corsErr = new Error(`Forbidden: CORS blocked request from untrusted origin`);
+      corsErr.statusCode = 403;
+      return callback(corsErr);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-token', 'x-request-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-token', 'x-provider-token', 'x-request-id'],
     exposedHeaders: ['x-request-id'],
   })
 );

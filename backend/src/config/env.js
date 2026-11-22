@@ -41,6 +41,11 @@ export const env = {
     autoRotate: process.env.ADMIN_AUTO_ROTATE_PASSWORD === 'true',
   },
 
+  // Google Identity Services (GIS) Provider Authentication
+  google: {
+    clientId: (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim(),
+  },
+
   // Image Upload & Storage Configuration
   storage: {
     provider: process.env.STORAGE_PROVIDER || 'local', // 'local' or 'cloudinary'

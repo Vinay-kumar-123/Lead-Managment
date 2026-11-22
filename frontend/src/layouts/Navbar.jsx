@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight, LayoutDashboard } from 'lucide-react';
 import BrandLogo from '../components/common/BrandLogo.jsx';
+import { useProviderAuth } from '../context/ProviderAuthContext.jsx';
 
 const navLinks = [
   { label: 'Categories', href: '/categories' },
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { isAuthenticated: isProviderAuth, onboardingCompleted } = useProviderAuth();
 
   // Close mobile drawer on route transition
   useEffect(() => {
@@ -81,12 +83,22 @@ export default function Navbar() {
 
           {/* Desktop Call to Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/become-a-partner"
-              className="text-sm font-semibold text-primary hover:text-accent px-3 py-2 rounded-sm hover:bg-slate-50 transition-colors"
-            >
-              Become a Partner
-            </Link>
+            {isProviderAuth && onboardingCompleted ? (
+              <Link
+                to="/provider/dashboard"
+                className="text-sm font-semibold text-primary hover:text-accent px-3 py-2 rounded-sm hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5"
+              >
+                <LayoutDashboard size={15} className="text-accent" />
+                <span>Provider Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                to="/become-a-partner"
+                className="text-sm font-semibold text-primary hover:text-accent px-3 py-2 rounded-sm hover:bg-slate-50 transition-colors"
+              >
+                Become a Partner
+              </Link>
+            )}
             <Link
               to="/get-quote"
               className="btn-primary text-sm py-2.5 px-5 shadow-sm"
