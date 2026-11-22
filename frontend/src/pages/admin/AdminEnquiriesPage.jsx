@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../services/api.js';
 import {
   FileText,
   Search,
   Filter,
-  Phone,
-  Mail,
   MapPin,
-  Calendar,
   CheckCircle2,
-  Clock,
   Eye,
   AlertCircle,
   X,
-  UserCheck,
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
+  UserX,
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
+  { value: 'all', label: 'All Active Statuses' },
   { value: 'new', label: 'New / Received' },
   { value: 'contacted', label: 'Contacted' },
   { value: 'qualified', label: 'Qualified' },
@@ -26,9 +28,12 @@ const STATUS_OPTIONS = [
   { value: 'converted', label: 'Converted' },
   { value: 'closed', label: 'Closed' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'deleted', label: 'Trash / Deleted' },
 ];
 
 export default function AdminEnquiriesPage() {
+  const { admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const [enquiries, setEnquiries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,6 +45,12 @@ export default function AdminEnquiriesPage() {
   const [newStatus, setNewStatus] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+
+  // Delete / Anonymize states
+  const [deleteTarget, setDeleteTarget] = useState(null); // { enquiry, mode: 'soft' | 'permanent' }
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
   const fetchEnquiries = () => {
     setIsLoading(true);
@@ -89,9 +100,78 @@ export default function AdminEnquiriesPage() {
         fetchEnquiries();
       }
     } catch (err) {
-      alert(err.message || 'Failed to update status');
+      setError(err.message || 'Failed to update status');
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleRestoreEnquiry = async (enq) => {
+    if (busyId === enq._id) return;
+    setBusyId(enq._id);
+    setError('');
+    setActionNotice('');
+    try {
+      const res = await adminDeletionService.restoreEnquiry(enq._id);
+      if (res?.success) {
+        setActionNotice(res.message || `Enquiry ${enq.referenceId} restored.`);
+        fetchEnquiries();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to restore enquiry');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleAnonymizeEnquiry = async (enq) => {
+    if (busyId === enq._id || enq.isAnonymized) return;
+    if (!window.confirm(`Anonymize customer personal data (name, phone, email, address) on ${enq.referenceId}? This preserves the enquiry record for reporting while removing PII.`)) {
+      return;
+    }
+    setBusyId(enq._id);
+    setError('');
+    setActionNotice('');
+    try {
+      const res = await adminDeletionService.anonymizeEnquiry(enq._id);
+      if (res?.success) {
+        setActionNotice(res.message || `Customer PII anonymized on ${enq.referenceId}.`);
+        setSelectedEnquiry(res.data);
+        fetchEnquiries();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to anonymize customer data');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason }) => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    setError('');
+    try {
+      const { enquiry, mode } = deleteTarget;
+      const res =
+        mode === 'permanent'
+          ? await adminDeletionService.permanentDeleteEnquiry(enquiry._id)
+          : await adminDeletionService.softDeleteEnquiry(enquiry._id, reason);
+      if (res?.success) {
+        setDeleteTarget(null);
+        setSelectedEnquiry(null);
+        setActionNotice(
+          res.message ||
+            (mode === 'permanent'
+              ? `Enquiry ${enquiry.referenceId} permanently deleted.`
+              : `Enquiry ${enquiry.referenceId} moved to trash.`)
+        );
+        fetchEnquiries();
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete enquiry');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -154,6 +234,13 @@ export default function AdminEnquiriesPage() {
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-semibold flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{actionNotice}</span>
+        </div>
+      )}
+
+      {error && (
+        <div role="alert" className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -220,18 +307,65 @@ export default function AdminEnquiriesPage() {
                     <td className="py-3.5 px-4 text-slate-500 text-[11px]">
                       {new Date(enq.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedEnquiry(enq);
-                          setNewStatus(enq.status);
-                        }}
-                        className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-[#FF6A03] hover:text-white text-slate-700 font-semibold transition-colors inline-flex items-center gap-1 text-[11px]"
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>Inspect</span>
-                      </button>
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedEnquiry(enq);
+                            setNewStatus(enq.status);
+                          }}
+                          className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-[#FF6A03] hover:text-white text-slate-700 font-semibold transition-colors inline-flex items-center gap-1 text-[11px] cursor-pointer"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Inspect</span>
+                        </button>
+
+                        {!enq.isDeleted ? (
+                          <button
+                            type="button"
+                            disabled={busyId === enq._id}
+                            onClick={() => {
+                              setDeleteError('');
+                              setDeleteTarget({ enquiry: enq, mode: 'soft' });
+                            }}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
+                            title={`Move enquiry ${enq.referenceId} to trash`}
+                            aria-label={`Delete enquiry ${enq.referenceId}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyId === enq._id}
+                              onClick={() => handleRestoreEnquiry(enq)}
+                              className="py-1 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title={`Restore ${enq.referenceId}`}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Restore</span>
+                            </button>
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                disabled={busyId === enq._id}
+                                onClick={() => {
+                                  setDeleteError('');
+                                  setDeleteTarget({ enquiry: enq, mode: 'permanent' });
+                                }}
+                                className="py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title={`Permanently delete ${enq.referenceId}`}
+                                aria-label={`Permanently delete enquiry ${enq.referenceId}`}
+                              >
+                                <ShieldAlert className="w-3 h-3" />
+                                <span>Purge</span>
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -337,17 +471,104 @@ export default function AdminEnquiriesPage() {
                   <button
                     type="button"
                     onClick={handleStatusUpdate}
-                    disabled={isUpdatingStatus || newStatus === selectedEnquiry.status}
+                    disabled={isUpdatingStatus || newStatus === selectedEnquiry.status || selectedEnquiry.isDeleted}
                     className="btn-primary py-2 px-4 text-xs font-bold whitespace-nowrap disabled:opacity-50"
                   >
                     {isUpdatingStatus ? 'Updating...' : 'Save Status'}
                   </button>
                 </div>
               </div>
+
+              {/* Privacy Anonymization & Deletion Controls */}
+              <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  disabled={busyId === selectedEnquiry._id || selectedEnquiry.isAnonymized}
+                  onClick={() => handleAnonymizeEnquiry(selectedEnquiry)}
+                  className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-45"
+                >
+                  <UserX className="w-3.5 h-3.5 text-amber-600" />
+                  <span>
+                    {selectedEnquiry.isAnonymized ? 'Customer PII Anonymized' : 'Anonymize Customer PII'}
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {!selectedEnquiry.isDeleted ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteError('');
+                        setDeleteTarget({ enquiry: selectedEnquiry, mode: 'soft' });
+                      }}
+                      className="py-2 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Move to Trash</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={busyId === selectedEnquiry._id}
+                        onClick={() => handleRestoreEnquiry(selectedEnquiry)}
+                        className="py-2 px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Restore</span>
+                      </button>
+                      {isSuperAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteError('');
+                            setDeleteTarget({ enquiry: selectedEnquiry, mode: 'permanent' });
+                          }}
+                          className="py-2 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>Permanently Delete</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteTarget?.mode || 'soft'}
+        entityType="Customer Enquiry"
+        recordName={deleteTarget?.enquiry?.name || ''}
+        identifierLabel={
+          deleteTarget?.enquiry
+            ? `${deleteTarget.enquiry.referenceId} · ${deleteTarget.enquiry.city} · ${
+                deleteTarget.enquiry.service || deleteTarget.enquiry.category
+              }`
+            : ''
+        }
+        description={
+          deleteTarget?.mode === 'permanent'
+            ? 'This enquiry record will be permanently removed from MongoDB. Linked provider profiles will NOT be deleted.'
+            : 'This enquiry will be hidden from active enquiry and provider dashboards and can be restored later from Trash.'
+        }
+        impactItems={
+          deleteTarget?.mode === 'permanent'
+            ? [
+                'Permanently deletes this customer enquiry / contact record.',
+                'Any assigned provider business profile remains intact and unaffected.',
+              ]
+            : []
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

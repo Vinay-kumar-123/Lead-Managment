@@ -185,6 +185,25 @@ const providerSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    deleteReason: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   {
     timestamps: true,
@@ -194,6 +213,7 @@ const providerSchema = new mongoose.Schema(
 // Compound index for optimized public provider queries
 providerSchema.index({ verificationStatus: 1, publicationStatus: 1, categorySlug: 1 });
 providerSchema.index({ verificationStatus: 1, publicationStatus: 1, city: 1 });
+providerSchema.index({ isDeleted: 1, verificationStatus: 1, publicationStatus: 1 });
 
 export const Provider = mongoose.model('Provider', providerSchema);
 export default Provider;

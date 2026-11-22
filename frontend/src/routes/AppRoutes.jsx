@@ -30,6 +30,7 @@ const AdminApplicationsPage = lazy(() => import('../pages/admin/AdminApplication
 const AdminApplicationDetailPage = lazy(() => import('../pages/admin/AdminApplicationDetailPage.jsx'));
 const AdminProvidersPage = lazy(() => import('../pages/admin/AdminProvidersPage.jsx'));
 const AdminProviderEditPage = lazy(() => import('../pages/admin/AdminProviderEditPage.jsx'));
+const AdminServicesPage = lazy(() => import('../pages/admin/AdminServicesPage.jsx'));
 const AdminCategoriesPage = lazy(() => import('../pages/admin/AdminCategoriesPage.jsx'));
 const AdminBlogsPage = lazy(() => import('../pages/admin/AdminBlogsPage.jsx'));
 const AdminBlogEditorPage = lazy(() => import('../pages/admin/AdminBlogEditorPage.jsx'));
@@ -126,6 +127,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <AdminProviderEditPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/services"
+          element={
+            <ProtectedRoute>
+              <AdminServicesPage />
             </ProtectedRoute>
           }
         />

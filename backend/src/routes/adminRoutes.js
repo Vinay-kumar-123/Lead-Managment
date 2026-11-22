@@ -6,6 +6,7 @@ import adminAuthController from '../controllers/adminAuthController.js';
 import adminProviderController from '../controllers/adminProviderController.js';
 import adminBlogController from '../controllers/adminBlogController.js';
 import adminCategoryController from '../controllers/adminCategoryController.js';
+import adminServiceController from '../controllers/adminServiceController.js';
 
 const router = express.Router();
 
@@ -39,24 +40,151 @@ router.get('/dashboard', requireAdmin, adminProviderController.getDashboardStats
 // Customer Enquiries management
 router.get('/enquiries', requireAdmin, adminProviderController.getEnquiries);
 router.put('/enquiries/:id/status', requireAdmin, adminProviderController.updateEnquiryStatus);
+router.delete(
+  '/enquiries/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminProviderController.softDeleteEnquiry
+);
+router.post(
+  '/enquiries/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminProviderController.restoreEnquiry
+);
+router.post(
+  '/enquiries/:id/anonymize',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.anonymizeEnquiry
+);
+router.delete(
+  '/enquiries/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminProviderController.permanentDeleteEnquiry
+);
 
 // Partner applications management
 router.get('/applications', requireAdmin, adminProviderController.getApplications);
 router.get('/applications/:id', requireAdmin, adminProviderController.getApplicationById);
 router.post('/applications/:id/approve', requireAdmin, adminProviderController.approveApplication);
 router.post('/applications/:id/reject', requireAdmin, adminProviderController.rejectApplication);
+router.delete(
+  '/applications/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminProviderController.softDeleteApplication
+);
+router.post(
+  '/applications/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminProviderController.restoreApplication
+);
+router.delete(
+  '/applications/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminProviderController.permanentDeleteApplication
+);
 
 // Provider profiles management & publishing
 router.get('/providers', requireAdmin, adminProviderController.getProviders);
 router.get('/providers/:id', requireAdmin, adminProviderController.getProviderById);
 router.put('/providers/:id', requireAdmin, adminProviderController.updateProvider);
+router.get(
+  '/providers/:id/deletion-impact',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.getProviderDeletionImpact
+);
+router.delete(
+  '/providers/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.softDeleteProvider
+);
+router.post(
+  '/providers/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.restoreProvider
+);
+router.delete(
+  '/providers/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminProviderController.permanentDeleteProvider
+);
+
+// Provider Services & Packages management
+router.get(
+  '/services',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.getServices
+);
+router.get(
+  '/services/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.getServiceById
+);
+router.patch(
+  '/services/:id/approval',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.updateServiceApproval
+);
+router.patch(
+  '/services/:id/status',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.updateServiceStatus
+);
+router.delete(
+  '/services/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.softDeleteService
+);
+router.post(
+  '/services/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATIONS_MANAGER'),
+  adminServiceController.restoreService
+);
+router.delete(
+  '/services/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminServiceController.permanentDeleteService
+);
 
 // Blog CMS management
 router.get('/blogs', requireAdmin, adminBlogController.getBlogs);
 router.get('/blogs/:id', requireAdmin, adminBlogController.getBlogById);
 router.post('/blogs', requireAdmin, adminBlogController.createBlog);
 router.put('/blogs/:id', requireAdmin, adminBlogController.updateBlog);
-router.delete('/blogs/:id', requireAdmin, adminBlogController.archiveBlog);
+router.delete(
+  '/blogs/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER'),
+  adminBlogController.archiveBlog
+);
+router.post(
+  '/blogs/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN', 'CONTENT_MANAGER'),
+  adminBlogController.restoreBlog
+);
+router.delete(
+  '/blogs/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminBlogController.permanentDeleteBlog
+);
 
 // Category & Subcategory Taxonomy Management (Strictly Admin-only)
 router.get(
@@ -83,6 +211,12 @@ router.get(
   requireRole('SUPER_ADMIN', 'ADMIN'),
   adminCategoryController.getCategoryById
 );
+router.get(
+  '/categories/:id/dependencies',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.getSubcategoryDependencies
+);
 router.put(
   '/categories/:id',
   requireAdmin,
@@ -106,9 +240,47 @@ router.put(
   requireAdmin,
   requireRole('SUPER_ADMIN', 'ADMIN'),
   adminCategoryController.updateSubcategoryStatus
+);
+router.delete(
+  '/categories/:id',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.softDeleteSubcategory
+);
+router.post(
+  '/categories/:id/restore',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.restoreSubcategory
+);
+router.post(
+  '/categories/:id/reassign',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminCategoryController.reassignSubcategoryDependencies
+);
+router.delete(
+  '/categories/:id/permanent',
+  requireAdmin,
+  requireRole('SUPER_ADMIN'),
+  adminCategoryController.permanentDeleteSubcategory
 );
 
-// Activity Logs
+// Media Cleanup Recovery Queue
+router.get(
+  '/media-cleanup',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.listMediaCleanupTasks
+);
+router.post(
+  '/media-cleanup/:id/retry',
+  requireAdmin,
+  requireRole('SUPER_ADMIN', 'ADMIN'),
+  adminProviderController.retryMediaCleanupTask
+);
+
+// Activity Logs (Immutable Audit Trail — Deletion Intentionally Restricted)
 router.get('/activity-logs', requireAdmin, adminProviderController.getActivityLogs);
 
 export default router;

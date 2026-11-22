@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
@@ -9,13 +11,15 @@ import {
   Plus,
   Edit,
   ExternalLink,
-  Archive,
   CheckCircle2,
-  Clock
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
 } from 'lucide-react';
 
 export default function AdminBlogsPage() {
-  const { token } = useAuth();
+  const { token, admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const [searchParams, setSearchParams] = useSearchParams();
 
   const currentStatus = searchParams.get('status') || 'all';
@@ -23,6 +27,12 @@ export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
   const fetchBlogs = () => {
     setIsLoading(true);
@@ -58,6 +68,53 @@ export default function AdminBlogsPage() {
     fetchBlogs();
   };
 
+  const handleRestore = async (blog) => {
+    if (busyId === blog._id) return;
+    setBusyId(blog._id);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await adminDeletionService.restoreBlog(blog._id);
+      if (res?.success) {
+        setSuccessMsg(res.message || `Article "${blog.title}" restored to draft.`);
+        fetchBlogs();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to restore article');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason }) => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    setError('');
+    setSuccessMsg('');
+    try {
+      const { blog, mode } = deleteTarget;
+      const res =
+        mode === 'permanent'
+          ? await adminDeletionService.permanentDeleteBlog(blog._id)
+          : await adminDeletionService.softDeleteBlog(blog._id, reason);
+      if (res?.success) {
+        setDeleteTarget(null);
+        setSuccessMsg(
+          res.message ||
+            (mode === 'permanent'
+              ? `Article "${blog.title}" permanently deleted.`
+              : `Article "${blog.title}" moved to trash.`)
+        );
+        fetchBlogs();
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete article');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AdminLayout title="Blog Editorial CMS" subtitle="Manage editorial guides, SEO metadata, and publishing status">
       {/* Filters Header */}
@@ -69,14 +126,17 @@ export default function AdminBlogsPage() {
             { label: 'Published (Live)', value: 'published' },
             { label: 'Drafts', value: 'draft' },
             { label: 'Archived', value: 'archived' },
+            { label: 'Trash / Deleted', value: 'deleted' },
           ].map((tab) => (
             <button
               key={tab.value}
               type="button"
               onClick={() => setSearchParams({ status: tab.value })}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
                 currentStatus === tab.value
-                  ? 'bg-slate-900 text-white'
+                  ? tab.value === 'deleted'
+                    ? 'bg-rose-700 text-white'
+                    : 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -107,6 +167,13 @@ export default function AdminBlogsPage() {
           </Link>
         </div>
       </div>
+
+      {successMsg && (
+        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -170,25 +237,71 @@ export default function AdminBlogsPage() {
                     <td className="py-3.5 px-4 text-slate-500 text-[11px]">
                       {b.publishedAt ? new Date(b.publishedAt).toLocaleDateString() : '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      {b.status === 'published' && (
-                        <a
-                          href={`/blog/${b.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-slate-400 hover:text-slate-600 p-1 inline-block"
-                          title="View on Live Website"
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        {!b.isDeleted && b.status === 'published' && (
+                          <a
+                            href={`/blog/${b.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-slate-400 hover:text-slate-600 p-1 inline-block"
+                            title="View on Live Website"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <Link
+                          to={`/admin/blogs/${b._id}`}
+                          className="btn-secondary py-1 px-3 text-[11px] font-semibold inline-flex items-center gap-1"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                      <Link
-                        to={`/admin/blogs/${b._id}`}
-                        className="btn-secondary py-1 px-3 text-[11px] font-semibold inline-flex items-center gap-1"
-                      >
-                        <Edit className="w-3 h-3" />
-                        <span>Edit</span>
-                      </Link>
+                          <Edit className="w-3 h-3" />
+                          <span>Edit</span>
+                        </Link>
+                        {!b.isDeleted ? (
+                          <button
+                            type="button"
+                            disabled={busyId === b._id}
+                            onClick={() => {
+                              setDeleteError('');
+                              setDeleteTarget({ blog: b, mode: 'soft' });
+                            }}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 cursor-pointer disabled:opacity-50"
+                            title={`Move "${b.title}" to trash`}
+                            aria-label={`Delete article ${b.title}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyId === b._id}
+                              onClick={() => handleRestore(b)}
+                              className="py-1 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title={`Restore "${b.title}"`}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Restore</span>
+                            </button>
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                disabled={busyId === b._id}
+                                onClick={() => {
+                                  setDeleteError('');
+                                  setDeleteTarget({ blog: b, mode: 'permanent' });
+                                }}
+                                className="py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title={`Permanently delete "${b.title}"`}
+                                aria-label={`Permanently delete article ${b.title}`}
+                              >
+                                <ShieldAlert className="w-3 h-3" />
+                                <span>Purge</span>
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -197,6 +310,27 @@ export default function AdminBlogsPage() {
           </div>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteTarget?.mode || 'soft'}
+        entityType="Blog Article"
+        recordName={deleteTarget?.blog?.title || ''}
+        identifierLabel={
+          deleteTarget?.blog
+            ? `/blog/${deleteTarget.blog.slug} · ${deleteTarget.blog.category}`
+            : ''
+        }
+        description={
+          deleteTarget?.mode === 'permanent'
+            ? 'This editorial article will be permanently deleted from MongoDB and removed from public routes and sitemaps.'
+            : 'This article will be archived to Trash and hidden from the public blog, sitemap, and SEO crawler endpoints.'
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

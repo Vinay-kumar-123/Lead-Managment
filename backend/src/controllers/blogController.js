@@ -129,8 +129,8 @@ export const blogController = {
 
       const isDbConnected = mongoose.connection.readyState === 1;
 
-      // Base query: ONLY published articles are returned via public API
-      const query = { status: 'published' };
+      // Base query: ONLY published non-deleted articles are returned via public API
+      const query = { status: 'published', isDeleted: { $ne: true } };
 
       if (category) {
         query.category = new RegExp(`^${category}$`, 'i');
@@ -210,7 +210,7 @@ export const blogController = {
 
       if (isDbConnected) {
         try {
-          categories = await Blog.distinct('category', { status: 'published' });
+          categories = await Blog.distinct('category', { status: 'published', isDeleted: { $ne: true } });
         } catch (dbErr) {
           logger.warn('Failed distinct category query, using fallback', { error: dbErr.message });
         }
@@ -241,8 +241,8 @@ export const blogController = {
 
       if (isDbConnected) {
         try {
-          // Strictly published articles only
-          blog = await Blog.findOne({ slug: cleanSlug, status: 'published' }).lean();
+          // Strictly published non-deleted articles only
+          blog = await Blog.findOne({ slug: cleanSlug, status: 'published', isDeleted: { $ne: true } }).lean();
         } catch (dbErr) {
           logger.warn('Failed querying article by slug in MongoDB', { slug: cleanSlug, error: dbErr.message });
         }
@@ -264,6 +264,7 @@ export const blogController = {
             category: blog.category,
             slug: { $ne: blog.slug },
             status: 'published',
+            isDeleted: { $ne: true },
           })
             .select('title slug excerpt coverImage readingTimeMinutes publishedAt category')
             .limit(3)

@@ -13,6 +13,7 @@ import {
   Activity,
   Settings,
   Layers,
+  Package,
   Menu,
   X,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ export default function AdminLayout({ children, title, subtitle }) {
     { label: 'Enquiries', href: '/admin/enquiries', icon: FileText },
     { label: 'Partner Applications', href: '/admin/applications', icon: Users },
     { label: 'Verified Providers', href: '/admin/providers', icon: Building2 },
+    { label: 'Services & Packages', href: '/admin/services', icon: Package },
     { label: 'Categories & Services', href: '/admin/categories', icon: Layers },
     { label: 'Blog CMS', href: '/admin/blogs', icon: BookOpen },
     { label: 'Activity Logs', href: '/admin/activity-logs', icon: Activity },

@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../services/api.js';
 import { useCategories } from '../../hooks/useCategories.js';
 import {
-  Building2,
   Save,
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  Phone,
-  Eye,
-  Globe,
   Trash2,
   Image as ImageIcon,
-  ShieldCheck,
-  MapPin,
+  RotateCcw,
+  ShieldAlert,
+  Package,
 } from 'lucide-react';
 
 export default function AdminProviderEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const { categories, getCategoryBySlug } = useCategories();
 
   const [provider, setProvider] = useState(null);
@@ -52,6 +54,10 @@ export default function AdminProviderEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [deleteModal, setDeleteModal] = useState(null); // { mode, impact }
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
@@ -148,11 +154,107 @@ export default function AdminProviderEditPage() {
     }
   };
 
+  const openDeleteModal = async (mode) => {
+    setDeleteError('');
+    if (mode === 'soft') {
+      setDeleteModal({ mode: 'soft', impact: null });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await adminDeletionService.getProviderDeletionImpact(id);
+      setDeleteModal({ mode: 'permanent', impact: res?.data?.impact || null });
+    } catch (err) {
+      setErrorMsg(err.message || 'Could not check deletion impact');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRestoreProvider = async () => {
+    setIsSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await adminDeletionService.restoreProvider(id);
+      if (res?.success) {
+        setProvider((prev) => ({
+          ...prev,
+          isDeleted: false,
+          publicationStatus: 'DRAFT',
+          verificationStatus: 'VERIFIED',
+        }));
+        setFormData((prev) => ({
+          ...prev,
+          publicationStatus: 'DRAFT',
+          verificationStatus: 'VERIFIED',
+        }));
+        setSuccessMsg(res.message || 'Provider restored as DRAFT.');
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Error restoring provider');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason, typedName }) => {
+    if (!deleteModal || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const res =
+        deleteModal.mode === 'permanent'
+          ? await adminDeletionService.permanentDeleteProvider(id, typedName)
+          : await adminDeletionService.softDeleteProvider(id, reason);
+      if (res?.success) {
+        setDeleteModal(null);
+        if (deleteModal.mode === 'permanent') {
+          navigate('/admin/providers', { replace: true });
+        } else {
+          setProvider((prev) => ({
+            ...prev,
+            isDeleted: true,
+            publicationStatus: 'ARCHIVED',
+            verificationStatus: 'REVOKED',
+          }));
+          setFormData((prev) => ({
+            ...prev,
+            publicationStatus: 'ARCHIVED',
+            verificationStatus: 'REVOKED',
+          }));
+          setSuccessMsg(res.message || 'Provider moved to trash.');
+        }
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete provider');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <AdminLayout title="Edit Provider" subtitle="Loading profile...">
         <div className="py-20 flex flex-col items-center justify-center">
           <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!provider) {
+    return (
+      <AdminLayout title="Provider Profile" subtitle="Not Found">
+        <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center max-w-lg mx-auto">
+          <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-900 mb-1">Provider Profile Not Found</h3>
+          <p className="text-xs text-slate-500 mb-6">
+            {errorMsg || 'This provider profile does not exist or has been permanently removed.'}
+          </p>
+          <Link to="/admin/providers" className="btn-secondary py-2 px-4 text-xs font-semibold">
+            Return to Providers List
+          </Link>
         </div>
       </AdminLayout>
     );
@@ -587,15 +689,103 @@ export default function AdminProviderEditPage() {
 
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || provider?.isDeleted}
               className="btn-primary w-full py-3 px-4 text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
             >
               <Save className="w-4 h-4" />
               <span>{isSaving ? 'Saving Changes...' : 'Save All Changes'}</span>
             </button>
+
+            <Link
+              to={`/admin/services?providerId=${id}`}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#012A7A] text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+            >
+              <Package className="w-4 h-4" />
+              <span>Manage Provider Services & Packages</span>
+            </Link>
+
+            {/* Deletion & Lifecycle Management */}
+            <div className="bg-rose-50/60 p-5 rounded-2xl border border-rose-200 space-y-3">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-rose-900">
+                Record Deletion & Access Control
+              </h3>
+              <p className="text-[11px] text-rose-800/80 leading-relaxed">
+                {provider?.isDeleted
+                  ? 'This provider profile is currently in Trash. Its public listing and login sessions are suspended.'
+                  : 'Moving to Trash archives the profile, hides public listings, and suspends provider login sessions.'}
+              </p>
+
+              {!provider?.isDeleted ? (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => openDeleteModal('soft')}
+                  className="w-full py-2 px-3 rounded-xl bg-white hover:bg-rose-100 text-rose-700 border border-rose-300 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Move Provider to Trash</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleRestoreProvider}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restore Provider as Draft</span>
+                </button>
+              )}
+
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => openDeleteModal('permanent')}
+                  className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Permanently Delete Provider</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </form>
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteModal)}
+        onClose={() => !isDeleting && setDeleteModal(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteModal?.mode || 'soft'}
+        entityType="Provider Profile"
+        recordName={provider?.businessName || ''}
+        identifierLabel={provider ? `/providers/${provider.slug} · ${provider.city}` : ''}
+        description={
+          deleteModal?.mode === 'permanent'
+            ? 'This will permanently delete the provider profile, its services/packages, and provider login account, while preserving customer enquiry history.'
+            : 'This will archive the provider profile and services, hide them from public listings, and immediately suspend provider authentication.'
+        }
+        impactItems={
+          deleteModal?.mode === 'permanent' && deleteModal?.impact
+            ? [
+                `${deleteModal.impact.servicesCount} service/package record(s) will be permanently deleted.`,
+                deleteModal.impact.hasLinkedAccount
+                  ? 'Linked Google provider account and sessions will be deleted.'
+                  : 'No linked provider account.',
+                `${deleteModal.impact.assignedEnquiriesCount} customer enquiry record(s) will be preserved (unlinked).`,
+              ]
+            : []
+        }
+        mediaItems={
+          deleteModal?.mode === 'permanent'
+            ? deleteModal?.impact?.ownedMediaAssets || []
+            : []
+        }
+        requireTypedConfirmation={deleteModal?.mode === 'permanent'}
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

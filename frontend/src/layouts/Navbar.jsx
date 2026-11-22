@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Providers', href: '/providers' },
   { label: 'Blog', href: '/blog' },
   { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/get-quote' },
 ];
 
 export default function Navbar() {

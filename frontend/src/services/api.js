@@ -113,7 +113,20 @@ export const api = {
       body: body instanceof FormData ? body : JSON.stringify(body),
       ...options,
     }),
-  delete: (endpoint, options = {}) => request(endpoint, { method: 'DELETE', ...options }),
+  delete: (endpoint, options = {}) => {
+    const { data, body, ...rest } = options || {};
+    const resolvedBody =
+      data !== undefined
+        ? JSON.stringify(data)
+        : body && typeof body === 'object' && !(body instanceof FormData)
+        ? JSON.stringify(body)
+        : body;
+    return request(endpoint, {
+      method: 'DELETE',
+      ...(resolvedBody !== undefined ? { body: resolvedBody } : {}),
+      ...rest,
+    });
+  },
   upload: (endpoint, formData, options = {}) =>
     request(endpoint, {
       method: 'POST',

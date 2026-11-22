@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
 import Category from '../models/Category.js';
+import Provider from '../models/Provider.js';
+import ProviderService from '../models/ProviderService.js';
+import Lead from '../models/Lead.js';
+import Blog from '../models/Blog.js';
+import { runInTransaction } from '../utils/dbTransaction.js';
 import env from '../config/env.js';
 import logger from '../utils/logger.js';
 
@@ -370,6 +375,10 @@ function formatSubcategory(sub) {
     parentName: sub.parentName || null,
     isMain: false,
     isActive: sub.isActive !== false,
+    isDeleted: Boolean(sub.isDeleted),
+    deletedAt: sub.deletedAt || null,
+    deletedBy: sub.deletedBy || '',
+    deleteReason: sub.deleteReason || '',
     icon: sub.icon || 'Layers',
     displayOrder: typeof sub.displayOrder === 'number' ? sub.displayOrder : 0,
     createdAt: sub.createdAt || null,
@@ -384,6 +393,7 @@ function formatMainCategory(main, subDocs = [], { onlyActiveSubs = false } = {})
   const canonical = CANONICAL_MAIN_CATEGORIES.find((c) => c.slug === main.slug) || {};
   const matchingSubs = subDocs
     .filter((s) => {
+      if (s.isDeleted === true) return false;
       const sameParent =
         (s.parentCategory && String(s.parentCategory) === String(main._id)) ||
         s.parentSlug === main.slug;
@@ -400,8 +410,9 @@ function formatMainCategory(main, subDocs = [], { onlyActiveSubs = false } = {})
 
   const allSubsForMain = subDocs.filter(
     (s) =>
-      (s.parentCategory && String(s.parentCategory) === String(main._id)) ||
-      s.parentSlug === main.slug
+      s.isDeleted !== true &&
+      ((s.parentCategory && String(s.parentCategory) === String(main._id)) ||
+        s.parentSlug === main.slug)
   );
   const activeCount = allSubsForMain.filter((s) => s.isActive !== false).length;
   const inactiveCount = allSubsForMain.length - activeCount;
@@ -729,8 +740,8 @@ export const categoryService = {
     if (isDbActive()) {
       await this.ensureCanonicalCategories();
       const [mains, subs] = await Promise.all([
-        Category.find({ isMain: true, isActive: true }).sort({ displayOrder: 1 }).lean(),
-        Category.find({ isMain: false, isActive: true }).sort({ displayOrder: 1, name: 1 }).lean(),
+        Category.find({ isMain: true, isActive: true, isDeleted: { $ne: true } }).sort({ displayOrder: 1 }).lean(),
+        Category.find({ isMain: false, isActive: true, isDeleted: { $ne: true } }).sort({ displayOrder: 1, name: 1 }).lean(),
       ]);
 
       // Ensure canonical order of the 5 main categories
@@ -807,8 +818,15 @@ export const categoryService = {
       return formatMainCategory(dbMain, allSubs, { onlyActiveSubs: false });
     });
 
+    const nonDeletedSubs = allSubs.filter((s) => s.isDeleted !== true);
+    const deletedSubs = allSubs.filter((s) => s.isDeleted === true);
+
     // Apply filters to subcategories list
-    let filteredSubs = allSubs.map(formatSubcategory);
+    const normalizedStatus = String(status || 'all').toLowerCase().trim();
+    let filteredSubs =
+      normalizedStatus === 'deleted'
+        ? deletedSubs.map(formatSubcategory)
+        : nonDeletedSubs.map(formatSubcategory);
 
     if (parentCategory && parentCategory !== 'all') {
       const cleanParent = String(parentCategory).trim().toLowerCase();
@@ -820,8 +838,7 @@ export const categoryService = {
       );
     }
 
-    if (status && status !== 'all') {
-      const normalizedStatus = String(status).toLowerCase().trim();
+    if (normalizedStatus && normalizedStatus !== 'all' && normalizedStatus !== 'deleted') {
       if (normalizedStatus === 'active' || normalizedStatus === 'true') {
         filteredSubs = filteredSubs.filter((s) => s.isActive === true);
       } else if (normalizedStatus === 'inactive' || normalizedStatus === 'false') {
@@ -850,9 +867,10 @@ export const categoryService = {
       return a.name.localeCompare(b.name);
     });
 
-    const totalSubcategories = allSubs.length;
-    const activeSubcategories = allSubs.filter((s) => s.isActive !== false).length;
+    const totalSubcategories = nonDeletedSubs.length;
+    const activeSubcategories = nonDeletedSubs.filter((s) => s.isActive !== false).length;
     const inactiveSubcategories = totalSubcategories - activeSubcategories;
+    const deletedSubcategories = deletedSubs.length;
 
     return {
       mainCategories: formattedMains,
@@ -862,6 +880,7 @@ export const categoryService = {
         totalSubcategories,
         activeSubcategories,
         inactiveSubcategories,
+        deletedSubcategories,
       },
     };
   },
@@ -886,6 +905,12 @@ export const categoryService = {
       (s) => String(s._id) === clean || s.slug === clean.toLowerCase()
     );
     if (foundSub) return foundSub;
+
+    const { subcategories: deletedSubs } = await this.getAdminCategories({ status: 'deleted' });
+    const foundDeletedSub = deletedSubs.find(
+      (s) => String(s._id) === clean || s.slug === clean.toLowerCase()
+    );
+    if (foundDeletedSub) return foundDeletedSub;
 
     throw createHttpError('Category or subcategory not found', 404);
   },
@@ -920,10 +945,13 @@ export const categoryService = {
       }).lean();
 
       if (existing) {
+        const msg = existing.isDeleted
+          ? `A subcategory named "${existing.name}" is currently in Trash. Restore it from Trash or permanently delete it first.`
+          : `A subcategory with the name "${extracted.name}" or slug "${extracted.slug}" already exists.`;
         throw createHttpError(
-          `A subcategory with the name "${extracted.name}" or slug "${extracted.slug}" already exists.`,
+          msg,
           409,
-          [{ field: 'name', message: 'A subcategory with this name or slug already exists' }]
+          [{ field: 'name', message: msg }]
         );
       }
 
@@ -973,10 +1001,13 @@ export const categoryService = {
       (s) => s.slug === extracted.slug || s.normalizedName === extracted.normalizedName
     );
     if (duplicateInMem) {
+      const msg = duplicateInMem.isDeleted
+        ? `A subcategory named "${duplicateInMem.name}" is currently in Trash. Restore it from Trash or permanently delete it first.`
+        : `A subcategory with the name "${extracted.name}" or slug "${extracted.slug}" already exists.`;
       throw createHttpError(
-        `A subcategory with the name "${extracted.name}" or slug "${extracted.slug}" already exists.`,
+        msg,
         409,
-        [{ field: 'name', message: 'A subcategory with this name or slug already exists' }]
+        [{ field: 'name', message: msg }]
       );
     }
 
@@ -1200,6 +1231,300 @@ export const categoryService = {
       ]);
     }
     return this.updateSubcategory(id, { isActive });
+  },
+
+  /**
+   * Resolves a subcategory document/object by ID or slug and rejects canonical main categories.
+   */
+  async _resolveTargetSubcategoryForDeletion(idOrSlug) {
+    const cleanId = String(idOrSlug || '').trim();
+    if (!cleanId) {
+      throw createHttpError('Category identifier is required.', 400);
+    }
+
+    const lowerClean = cleanId.toLowerCase();
+    if (CANONICAL_MAIN_SLUGS.includes(lowerClean)) {
+      throw createHttpError(
+        'The 5 canonical Dealsathi main categories are protected core verticals and cannot be deleted.',
+        403
+      );
+    }
+
+    if (isDbActive()) {
+      await this.ensureCanonicalCategories();
+      let targetDoc = null;
+      if (mongoose.Types.ObjectId.isValid(cleanId) && /^[a-fA-F0-9]{24}$/.test(cleanId)) {
+        targetDoc = await Category.findById(cleanId);
+      }
+      if (!targetDoc) {
+        targetDoc = await Category.findOne({ slug: lowerClean });
+      }
+      if (!targetDoc) {
+        throw createHttpError('Category or subcategory not found.', 404);
+      }
+      if (targetDoc.isMain || CANONICAL_MAIN_SLUGS.includes(targetDoc.slug)) {
+        throw createHttpError(
+          'The 5 canonical Dealsathi main categories are protected core verticals and cannot be deleted.',
+          403
+        );
+      }
+      return { doc: targetDoc, isDb: true };
+    }
+
+    const isMainInMem = inMemoryStore.mains.some(
+      (m) => String(m._id) === cleanId || m.slug === lowerClean
+    );
+    if (isMainInMem) {
+      throw createHttpError(
+        'The 5 canonical Dealsathi main categories are protected core verticals and cannot be deleted.',
+        403
+      );
+    }
+
+    const idx = inMemoryStore.subs.findIndex(
+      (s) => String(s._id) === cleanId || s.slug === lowerClean
+    );
+    if (idx === -1) {
+      throw createHttpError('Category or subcategory not found.', 404);
+    }
+
+    return { doc: inMemoryStore.subs[idx], idx, isDb: false };
+  },
+
+  /**
+   * Checks active database dependencies (Providers, Services, Enquiries, Blogs) before deleting a subcategory.
+   */
+  async getSubcategoryDependencies(idOrSlug) {
+    const { doc } = await this._resolveTargetSubcategoryForDeletion(idOrSlug);
+    const sub = formatSubcategory(doc);
+    const isCanonicalDefault = CANONICAL_MAIN_CATEGORIES.some((m) =>
+      m.subcategories.some((s) => s.slug === sub.slug)
+    );
+
+    let providersCount = 0;
+    let servicesCount = 0;
+    let enquiriesCount = 0;
+    let blogsCount = 0;
+
+    if (
+      (mongoose.connection.readyState === 1 || Provider._isMocked === true) &&
+      !Category._isMocked
+    ) {
+      const exactNameRegex = new RegExp(`^${escapeRegex(sub.name)}$`, 'i');
+      [providersCount, servicesCount, enquiriesCount, blogsCount] = await Promise.all([
+        Provider.countDocuments({
+          isDeleted: { $ne: true },
+          $or: [
+            { subcategorySlug: sub.slug },
+            { subcategory: exactNameRegex },
+            { services: exactNameRegex },
+          ],
+        }),
+        ProviderService.countDocuments({
+          isDeleted: { $ne: true },
+          $or: [{ subcategorySlug: sub.slug }, { subcategory: exactNameRegex }],
+        }),
+        Lead.countDocuments({
+          isDeleted: { $ne: true },
+          service: exactNameRegex,
+        }),
+        Blog.countDocuments({
+          isDeleted: { $ne: true },
+          relatedServiceSlug: sub.slug,
+        }),
+      ]);
+    }
+
+    const totalDependencies = providersCount + servicesCount + enquiriesCount + blogsCount;
+    return {
+      subcategory: sub,
+      isCanonicalDefault,
+      dependencies: {
+        providersCount,
+        servicesCount,
+        enquiriesCount,
+        blogsCount,
+        totalDependencies,
+      },
+      canPermanentlyDelete: totalDependencies === 0,
+    };
+  },
+
+  /**
+   * Soft-deletes (archives) a subcategory while preserving existing providers, services, and leads.
+   */
+  async softDeleteSubcategory(idOrSlug, adminEmail = '', reason = '') {
+    const { doc, isDb } = await this._resolveTargetSubcategoryForDeletion(idOrSlug);
+    if (doc.isDeleted) {
+      return formatSubcategory(doc);
+    }
+
+    const now = new Date();
+    if (isDb) {
+      doc.isDeleted = true;
+      doc.deletedAt = now;
+      doc.deletedBy = String(adminEmail || '').toLowerCase();
+      doc.deleteReason = String(reason || '').trim().slice(0, 300);
+      doc.isActive = false;
+      await doc.save();
+      return formatSubcategory(doc.toObject ? doc.toObject() : doc);
+    }
+
+    doc.isDeleted = true;
+    doc.deletedAt = now.toISOString();
+    doc.deletedBy = String(adminEmail || '').toLowerCase();
+    doc.deleteReason = String(reason || '').trim().slice(0, 300);
+    doc.isActive = false;
+    doc.updatedAt = now.toISOString();
+    return formatSubcategory(doc);
+  },
+
+  /**
+   * Restores a soft-deleted subcategory in an inactive (staged) state for safe review.
+   */
+  async restoreSubcategory(idOrSlug) {
+    const { doc, isDb } = await this._resolveTargetSubcategoryForDeletion(idOrSlug);
+    if (!doc.isDeleted) {
+      throw createHttpError('Subcategory is not deleted.', 400);
+    }
+
+    if (isDb) {
+      doc.isDeleted = false;
+      doc.deletedAt = null;
+      doc.deletedBy = '';
+      doc.deleteReason = '';
+      doc.isActive = false;
+      await doc.save();
+      return formatSubcategory(doc.toObject ? doc.toObject() : doc);
+    }
+
+    doc.isDeleted = false;
+    doc.deletedAt = null;
+    doc.deletedBy = '';
+    doc.deleteReason = '';
+    doc.isActive = false;
+    doc.updatedAt = new Date().toISOString();
+    return formatSubcategory(doc);
+  },
+
+  /**
+   * Safely reassigns dependent Providers, Services, and Blog relatedServiceSlugs to another active subcategory.
+   */
+  async reassignSubcategoryDependencies(sourceIdOrSlug, targetIdOrSlug) {
+    const { doc: sourceDoc } = await this._resolveTargetSubcategoryForDeletion(sourceIdOrSlug);
+    const { doc: targetDoc } = await this._resolveTargetSubcategoryForDeletion(targetIdOrSlug);
+
+    if (String(sourceDoc._id) === String(targetDoc._id) || sourceDoc.slug === targetDoc.slug) {
+      throw createHttpError('Target subcategory must be different from the source subcategory.', 400);
+    }
+    if (targetDoc.isDeleted === true || targetDoc.isActive === false) {
+      throw createHttpError('Target subcategory must be active and not deleted.', 400);
+    }
+
+    let providersUpdated = 0;
+    let servicesUpdated = 0;
+    let blogsUpdated = 0;
+
+    if (
+      (mongoose.connection.readyState === 1 || Provider._isMocked === true) &&
+      !Category._isMocked
+    ) {
+      const exactNameRegex = new RegExp(`^${escapeRegex(sourceDoc.name)}$`, 'i');
+      await runInTransaction(async (session) => {
+        const opts = session ? { session } : {};
+        const matchingProviders = await Provider.find(
+          {
+            isDeleted: { $ne: true },
+            $or: [
+              { subcategorySlug: sourceDoc.slug },
+              { subcategory: exactNameRegex },
+              { services: exactNameRegex },
+            ],
+          },
+          null,
+          opts
+        );
+
+        for (const prov of matchingProviders) {
+          let changed = false;
+          if (
+            prov.subcategorySlug === sourceDoc.slug ||
+            (prov.subcategory && prov.subcategory.toLowerCase() === sourceDoc.name.toLowerCase())
+          ) {
+            prov.subcategory = targetDoc.name;
+            prov.subcategorySlug = targetDoc.slug;
+            changed = true;
+          }
+          if (Array.isArray(prov.services)) {
+            const nextServices = prov.services.map((s) =>
+              String(s).toLowerCase() === sourceDoc.name.toLowerCase() ? targetDoc.name : s
+            );
+            if (JSON.stringify(nextServices) !== JSON.stringify(prov.services)) {
+              prov.services = Array.from(new Set(nextServices));
+              changed = true;
+            }
+          }
+          if (changed) {
+            await prov.save(opts);
+            providersUpdated += 1;
+          }
+        }
+
+        const svcRes = await ProviderService.updateMany(
+          {
+            isDeleted: { $ne: true },
+            $or: [{ subcategorySlug: sourceDoc.slug }, { subcategory: exactNameRegex }],
+          },
+          { $set: { subcategory: targetDoc.name, subcategorySlug: targetDoc.slug } },
+          opts
+        );
+        servicesUpdated = svcRes.modifiedCount || 0;
+
+        const blogRes = await Blog.updateMany(
+          { isDeleted: { $ne: true }, relatedServiceSlug: sourceDoc.slug },
+          { $set: { relatedServiceSlug: targetDoc.slug } },
+          opts
+        );
+        blogsUpdated = blogRes.modifiedCount || 0;
+      });
+    }
+
+    return {
+      source: formatSubcategory(sourceDoc),
+      target: formatSubcategory(targetDoc),
+      reassigned: {
+        providersUpdated,
+        servicesUpdated,
+        blogsUpdated,
+      },
+    };
+  },
+
+  /**
+   * Permanently deletes a subcategory ONLY if it is not a protected main category and has zero active dependencies.
+   */
+  async permanentDeleteSubcategory(idOrSlug) {
+    const depReport = await this.getSubcategoryDependencies(idOrSlug);
+    if (!depReport.canPermanentlyDelete) {
+      throw createHttpError(
+        `Cannot permanently delete subcategory "${depReport.subcategory.name}" because ${depReport.dependencies.totalDependencies} active record(s) depend on it (${depReport.dependencies.providersCount} providers, ${depReport.dependencies.servicesCount} services, ${depReport.dependencies.enquiriesCount} enquiries, ${depReport.dependencies.blogsCount} blogs). Deactivate it or reassign dependencies first.`,
+        409,
+        [{ field: 'dependencies', dependencies: depReport.dependencies }]
+      );
+    }
+
+    const { doc, idx, isDb } = await this._resolveTargetSubcategoryForDeletion(idOrSlug);
+    if (isDb) {
+      await Category.deleteOne({ _id: doc._id });
+    } else {
+      inMemoryStore.subs.splice(idx, 1);
+    }
+
+    return {
+      deletedId: String(doc._id),
+      slug: doc.slug,
+      name: doc.name,
+    };
   },
 };
 

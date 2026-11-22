@@ -39,7 +39,7 @@ export const renderController = {
 
       if (isDbConnected) {
         try {
-          blog = await Blog.findOne({ slug: cleanSlug, status: 'published' }).lean();
+          blog = await Blog.findOne({ slug: cleanSlug, status: 'published', isDeleted: { $ne: true } }).lean();
         } catch (dbErr) {
           logger.warn('Failed querying article for SSR render', { slug: cleanSlug, error: dbErr.message });
         }

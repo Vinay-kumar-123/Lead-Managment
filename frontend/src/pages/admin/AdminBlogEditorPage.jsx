@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
-  Save,
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  BookOpen,
-  Eye,
-  Archive,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
 } from 'lucide-react';
 
 const CATEGORY_CHOICES = [
@@ -25,7 +26,8 @@ const CATEGORY_CHOICES = [
 export default function AdminBlogEditorPage() {
   const { id } = useParams();
   const isNew = !id || id === 'new';
-  const { token } = useAuth();
+  const { token, admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -48,6 +50,10 @@ export default function AdminBlogEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDeletedBlog, setIsDeletedBlog] = useState(false);
+  const [deleteMode, setDeleteMode] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!isNew) {
@@ -74,6 +80,7 @@ export default function AdminBlogEditorPage() {
               metaDescription: b.metaDescription || '',
               relatedServiceSlug: b.relatedServiceSlug || '',
             });
+            setIsDeletedBlog(Boolean(b.isDeleted));
           } else {
             setErrorMsg('Article not found');
           }
@@ -150,6 +157,50 @@ export default function AdminBlogEditorPage() {
     }
   };
 
+  const handleRestoreBlog = async () => {
+    setIsSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await adminDeletionService.restoreBlog(id);
+      if (res?.success) {
+        setIsDeletedBlog(false);
+        setFormData((prev) => ({ ...prev, status: 'draft' }));
+        setSuccessMsg(res.message || 'Blog article restored to draft.');
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to restore blog article');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason }) => {
+    if (!deleteMode || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const res =
+        deleteMode === 'permanent'
+          ? await adminDeletionService.permanentDeleteBlog(id)
+          : await adminDeletionService.softDeleteBlog(id, reason);
+      if (res?.success) {
+        setDeleteMode(null);
+        if (deleteMode === 'permanent') {
+          navigate('/admin/blogs', { replace: true });
+        } else {
+          setIsDeletedBlog(true);
+          setFormData((prev) => ({ ...prev, status: 'archived' }));
+          setSuccessMsg(res.message || 'Blog article moved to trash.');
+        }
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete article');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <AdminLayout title="Blog Editor" subtitle="Loading article...">
@@ -175,8 +226,8 @@ export default function AdminBlogEditorPage() {
         </Link>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          {!isNew && formData.status === 'published' && (
+        <div className="flex flex-wrap items-center gap-2">
+          {!isNew && formData.status === 'published' && !isDeletedBlog && (
             <a
               href={`/blog/${formData.slug}`}
               target="_blank"
@@ -191,7 +242,7 @@ export default function AdminBlogEditorPage() {
           <button
             type="button"
             onClick={() => handleSave('draft')}
-            disabled={isSaving}
+            disabled={isSaving || isDeletedBlog}
             className="btn-secondary py-1.5 px-4 text-xs font-bold"
           >
             Save Draft
@@ -200,12 +251,56 @@ export default function AdminBlogEditorPage() {
           <button
             type="button"
             onClick={() => handleSave('published')}
-            disabled={isSaving}
+            disabled={isSaving || isDeletedBlog}
             className="btn-primary py-1.5 px-5 text-xs font-bold inline-flex items-center gap-1.5 shadow-xs"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{formData.status === 'published' ? 'Update & Keep Published' : 'Publish Live'}</span>
           </button>
+
+          {!isNew && !isDeletedBlog && (
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError('');
+                setDeleteMode('soft');
+              }}
+              disabled={isSaving}
+              className="py-1.5 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              aria-label={`Move ${formData.title} to trash`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Move to Trash</span>
+            </button>
+          )}
+
+          {!isNew && isDeletedBlog && (
+            <>
+              <button
+                type="button"
+                onClick={handleRestoreBlog}
+                disabled={isSaving}
+                className="py-1.5 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Restore</span>
+              </button>
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError('');
+                    setDeleteMode('permanent');
+                  }}
+                  disabled={isSaving}
+                  className="py-1.5 px-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Purge</span>
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -410,6 +505,23 @@ export default function AdminBlogEditorPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteMode)}
+        onClose={() => !isDeleting && setDeleteMode(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteMode || 'soft'}
+        entityType="Blog Article"
+        recordName={formData.title}
+        identifierLabel={`/blog/${formData.slug}`}
+        description={
+          deleteMode === 'permanent'
+            ? 'This article will be permanently deleted from MongoDB.'
+            : 'This article will be moved to Trash (archived) and hidden from public listings and sitemaps.'
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

@@ -14,6 +14,7 @@ export const providerController = {
 
       // Strict public visibility gate
       const query = {
+        isDeleted: { $ne: true },
         verificationStatus: 'VERIFIED',
         publicationStatus: 'PUBLISHED',
       };
@@ -94,6 +95,7 @@ export const providerController = {
 
       const provider = await Provider.findOne({
         slug: cleanSlug,
+        isDeleted: { $ne: true },
         verificationStatus: 'VERIFIED',
         publicationStatus: 'PUBLISHED',
       }).lean();

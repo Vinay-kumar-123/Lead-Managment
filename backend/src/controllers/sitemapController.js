@@ -45,13 +45,13 @@ export const sitemapController = {
 
       if (isDbConnected) {
         try {
-          // Strictly published articles and verified+published providers
+          // Strictly published non-deleted articles and verified+published providers
           [articles, providers] = await Promise.all([
-            Blog.find({ status: 'published' })
+            Blog.find({ status: 'published', isDeleted: { $ne: true } })
               .select('slug publishedAt updatedAt')
               .sort({ publishedAt: -1 })
               .lean(),
-            Provider.find({ verificationStatus: 'VERIFIED', publicationStatus: 'PUBLISHED' })
+            Provider.find({ isDeleted: { $ne: true }, verificationStatus: 'VERIFIED', publicationStatus: 'PUBLISHED' })
               .select('slug publishedAt updatedAt')
               .sort({ publishedAt: -1 })
               .lean(),

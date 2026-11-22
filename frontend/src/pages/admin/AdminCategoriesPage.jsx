@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
 import categoryService from '../../services/categoryService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { categories as seedCategories } from '../../data/categories.js';
 import {
   Layers,
@@ -19,12 +21,15 @@ import {
   Monitor,
   GraduationCap,
   ShieldCheck,
-  Filter,
   RefreshCw,
   ExternalLink,
   FolderTree,
   Tag,
   ArrowUpRight,
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -90,13 +95,17 @@ function buildFallbackAdminData() {
 }
 
 export default function AdminCategoriesPage() {
+  const { admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const [mainCategories, setMainCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+  const [allActiveSubcategories, setAllActiveSubcategories] = useState([]);
   const [summary, setSummary] = useState({
     totalMainCategories: 5,
     totalSubcategories: 0,
     activeSubcategories: 0,
     inactiveSubcategories: 0,
+    deletedSubcategories: 0,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -105,7 +114,7 @@ export default function AdminCategoriesPage() {
 
   // Search & Filter states
   const [selectedParentSlug, setSelectedParentSlug] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'inactive'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'inactive' | 'deleted'
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states
@@ -113,6 +122,14 @@ export default function AdminCategoriesPage() {
   const [formMode, setFormMode] = useState('create'); // 'create' | 'edit'
   const [editingSubcategory, setEditingSubcategory] = useState(null);
   const [viewingSubcategory, setViewingSubcategory] = useState(null);
+
+  // Delete & Reassign modal states
+  const [deleteTarget, setDeleteTarget] = useState(null); // { sub, mode: 'soft' | 'permanent', depReport }
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [reassignTarget, setReassignTarget] = useState(null); // { sub, depReport }
+  const [reassignToId, setReassignToId] = useState('');
+  const [isReassigning, setIsReassigning] = useState(false);
 
   // Form data & validation states
   const [formData, setFormData] = useState({
@@ -132,10 +149,18 @@ export default function AdminCategoriesPage() {
     setLoadError('');
 
     try {
-      const res = await categoryService.getAdminCategories();
+      const [res, activeRes] = await Promise.all([
+        categoryService.getAdminCategories({ status: statusFilter === 'deleted' ? 'deleted' : 'all' }),
+        statusFilter === 'deleted' ? categoryService.getAdminCategories({ status: 'active' }) : Promise.resolve(null),
+      ]);
       if (res && res.success && res.data) {
         setMainCategories(res.data.mainCategories || []);
         setSubcategories(res.data.subcategories || []);
+        if (activeRes?.success && activeRes?.data?.subcategories) {
+          setAllActiveSubcategories(activeRes.data.subcategories);
+        } else {
+          setAllActiveSubcategories((res.data.subcategories || []).filter((s) => s.isActive && !s.isDeleted));
+        }
         if (res.data.summary) {
           setSummary(res.data.summary);
         }
@@ -146,6 +171,7 @@ export default function AdminCategoriesPage() {
       const fallback = buildFallbackAdminData();
       setMainCategories((prev) => (prev.length > 0 ? prev : fallback.mainCategories));
       setSubcategories((prev) => (prev.length > 0 ? prev : fallback.subcategories));
+      setAllActiveSubcategories(fallback.subcategories.filter((s) => s.isActive));
       setSummary((prev) => (prev.totalSubcategories > 0 ? prev : fallback.summary));
       setLoadError(
         err.message || 'Could not reach the backend API. Showing canonical taxonomy data.'
@@ -153,7 +179,7 @@ export default function AdminCategoriesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchCategoriesData();
@@ -409,6 +435,119 @@ export default function AdminCategoriesPage() {
     setSearchQuery('');
   };
 
+  const openSubcategoryDeleteModal = async (sub, mode) => {
+    const targetId = sub._id || sub.slug;
+    if (togglingId === targetId) return;
+    setTogglingId(targetId);
+    setDeleteError('');
+    try {
+      const depRes = await categoryService.getSubcategoryDependencies(targetId);
+      setDeleteTarget({
+        sub,
+        mode,
+        depReport: depRes?.data || null,
+      });
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Could not inspect category dependencies before deletion.',
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleRestoreSubcategory = async (sub) => {
+    const targetId = sub._id || sub.slug;
+    if (togglingId === targetId) return;
+    setTogglingId(targetId);
+    setFeedback(null);
+    try {
+      const res = await categoryService.restoreSubcategory(targetId);
+      if (res?.success) {
+        setFeedback({
+          type: 'success',
+          message: res.message || `Subcategory "${sub.name}" restored as inactive.`,
+        });
+        await fetchCategoriesData({ silent: true });
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to restore subcategory.' });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleConfirmDeleteSubcategory = async ({ reason }) => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const { sub, mode } = deleteTarget;
+      const targetId = sub._id || sub.slug;
+      const res =
+        mode === 'permanent'
+          ? await categoryService.permanentDeleteSubcategory(targetId)
+          : await categoryService.softDeleteSubcategory(targetId, reason);
+      if (res?.success) {
+        setDeleteTarget(null);
+        setViewingSubcategory(null);
+        setFeedback({
+          type: 'success',
+          message:
+            res.message ||
+            (mode === 'permanent'
+              ? `Subcategory "${sub.name}" permanently deleted.`
+              : `Subcategory "${sub.name}" moved to trash.`),
+        });
+        await fetchCategoriesData({ silent: true });
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete subcategory.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleOpenReassign = async (sub, existingReport = null) => {
+    setDeleteTarget(null);
+    setReassignToId('');
+    if (existingReport) {
+      setReassignTarget({ sub, depReport: existingReport });
+      return;
+    }
+    try {
+      const res = await categoryService.getSubcategoryDependencies(sub._id || sub.slug);
+      setReassignTarget({ sub, depReport: res?.data || null });
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Could not inspect dependencies.' });
+    }
+  };
+
+  const handleConfirmReassign = async (e) => {
+    e.preventDefault();
+    if (!reassignTarget || !reassignToId || isReassigning) return;
+    setIsReassigning(true);
+    try {
+      const res = await categoryService.reassignSubcategoryDependencies(
+        reassignTarget.sub._id || reassignTarget.sub.slug,
+        reassignToId
+      );
+      if (res?.success) {
+        setReassignTarget(null);
+        setFeedback({
+          type: 'success',
+          message: res.message || 'Dependencies reassigned successfully.',
+        });
+        await fetchCategoriesData({ silent: true });
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to reassign dependencies.' });
+    } finally {
+      setIsReassigning(false);
+    }
+  };
+
   const slugPreview = createSlugPreview(formData.name);
 
   return (
@@ -623,9 +762,9 @@ export default function AdminCategoriesPage() {
                       </span>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      ACTIVE
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Canonical main verticals cannot be deleted">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      PROTECTED
                     </span>
                   </div>
 
@@ -818,14 +957,17 @@ export default function AdminCategoriesPage() {
                 { label: 'All', value: 'all' },
                 { label: 'Active', value: 'active' },
                 { label: 'Inactive', value: 'inactive' },
+                { label: `Trash${summary.deletedSubcategories ? ` (${summary.deletedSubcategories})` : ''}`, value: 'deleted' },
               ].map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   onClick={() => setStatusFilter(tab.value)}
-                  className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
                     statusFilter === tab.value
-                      ? 'bg-white text-[#012A7A] shadow-2xs'
+                      ? tab.value === 'deleted'
+                        ? 'bg-rose-700 text-white shadow-2xs'
+                        : 'bg-white text-[#012A7A] shadow-2xs'
                       : 'text-slate-600 hover:text-[#012A7A]'
                   }`}
                 >
@@ -974,40 +1116,82 @@ export default function AdminCategoriesPage() {
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditModal(sub)}
-                            className="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#012A7A] font-bold text-[11px] inline-flex items-center gap-1 transition-colors cursor-pointer"
-                            title={`Edit ${sub.name}`}
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
+                          {!sub.isDeleted ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditModal(sub)}
+                                className="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#012A7A] font-bold text-[11px] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                title={`Edit ${sub.name}`}
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(sub)}
-                            disabled={isToggling}
-                            className={`py-1.5 px-2.5 rounded-lg font-bold text-[11px] inline-flex items-center gap-1 border transition-colors cursor-pointer disabled:opacity-50 ${
-                              sub.isActive
-                                ? 'bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border-slate-200 hover:border-rose-200'
-                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
-                            }`}
-                            title={
-                              sub.isActive
-                                ? `Deactivate ${sub.name}`
-                                : `Activate ${sub.name}`
-                            }
-                          >
-                            <Power className="w-3.5 h-3.5" />
-                            <span>
-                              {isToggling
-                                ? '...'
-                                : sub.isActive
-                                ? 'Deactivate'
-                                : 'Activate'}
-                            </span>
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(sub)}
+                                disabled={isToggling}
+                                className={`py-1.5 px-2.5 rounded-lg font-bold text-[11px] inline-flex items-center gap-1 border transition-colors cursor-pointer disabled:opacity-50 ${
+                                  sub.isActive
+                                    ? 'bg-white hover:bg-amber-50 text-slate-600 hover:text-amber-800 border-slate-200 hover:border-amber-200'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                                }`}
+                                title={
+                                  sub.isActive
+                                    ? `Deactivate ${sub.name}`
+                                    : `Activate ${sub.name}`
+                                }
+                              >
+                                <Power className="w-3.5 h-3.5" />
+                                <span>
+                                  {isToggling
+                                    ? '...'
+                                    : sub.isActive
+                                    ? 'Deactivate'
+                                    : 'Activate'}
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => openSubcategoryDeleteModal(sub, 'soft')}
+                                disabled={isToggling}
+                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
+                                title={`Move ${sub.name} to trash`}
+                                aria-label={`Delete subcategory ${sub.name}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreSubcategory(sub)}
+                                disabled={isToggling}
+                                className="py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title={`Restore ${sub.name}`}
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Restore</span>
+                              </button>
+
+                              {isSuperAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => openSubcategoryDeleteModal(sub, 'permanent')}
+                                  disabled={isToggling}
+                                  className="py-1.5 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  title={`Permanently delete ${sub.name}`}
+                                  aria-label={`Permanently delete subcategory ${sub.name}`}
+                                >
+                                  <ShieldAlert className="w-3.5 h-3.5" />
+                                  <span>Purge</span>
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1338,17 +1522,166 @@ export default function AdminCategoriesPage() {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditModal(viewingSubcategory)}
-                    className="py-2 px-3.5 rounded-xl bg-[#012A7A] hover:bg-[#1B3B66] text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit Subcategory</span>
-                  </button>
+                  {!viewingSubcategory.isDeleted && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openSubcategoryDeleteModal(viewingSubcategory, 'soft')}
+                        className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(viewingSubcategory)}
+                        className="py-2 px-3.5 rounded-xl bg-[#012A7A] hover:bg-[#1B3B66] text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Subcategory</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 3: SUBCATEGORY DELETE / DEPENDENCY CHECK MODAL
+         ========================================================================= */}
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={handleConfirmDeleteSubcategory}
+        mode={deleteTarget?.mode || 'soft'}
+        entityType="Subcategory"
+        recordName={deleteTarget?.sub?.name || ''}
+        identifierLabel={
+          deleteTarget?.sub
+            ? `/${deleteTarget.sub.slug} · Parent: ${deleteTarget.sub.parentName}`
+            : ''
+        }
+        description={
+          deleteTarget?.mode === 'permanent'
+            ? 'Permanently removes this unused subcategory from MongoDB. Canonical main categories and active dependencies cannot be orphaned.'
+            : 'Moves this subcategory to Trash and hides it from public category and quote forms. Existing providers and services are preserved and never cascade-deleted.'
+        }
+        impactItems={
+          deleteTarget?.depReport
+            ? [
+                `Providers referencing this subcategory: ${deleteTarget.depReport.dependencies.providersCount}`,
+                `Services/Packages referencing this subcategory: ${deleteTarget.depReport.servicesCount}`,
+                `Customer Enquiries referencing this subcategory: ${deleteTarget.depReport.enquiriesCount}`,
+                `Blog Articles linked to this slug: ${deleteTarget.depReport.blogsCount}`,
+              ]
+            : []
+        }
+        blockedReason={
+          deleteTarget?.mode === 'permanent' &&
+          deleteTarget?.depReport &&
+          !deleteTarget.depReport.canPermanentlyDelete
+            ? `Permanent deletion is blocked because ${deleteTarget.depReport.dependencies.totalDependencies} active record(s) still reference "${deleteTarget.sub.name}". Use Deactivate, Move to Trash, or Reassign dependencies first.`
+            : ''
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
+
+      {/* Quick Reassign Trigger Banner when Permanent Delete is Blocked */}
+      {deleteTarget?.mode === 'permanent' &&
+        deleteTarget?.depReport &&
+        !deleteTarget.depReport.canPermanentlyDelete && (
+          <div className="fixed bottom-6 right-6 z-50 bg-white border border-amber-300 shadow-xl rounded-2xl p-4 max-w-sm text-xs flex items-center justify-between gap-3">
+            <div>
+              <strong className="text-[#012A7A] block">Need to remove this subcategory?</strong>
+              <span className="text-slate-600">
+                Reassign its {deleteTarget.depReport.dependencies.totalDependencies} dependencies to another subcategory first.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleOpenReassign(deleteTarget.sub, deleteTarget.depReport)}
+              className="py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer"
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" />
+              <span>Reassign</span>
+            </button>
+          </div>
+        )}
+
+      {/* =========================================================================
+          MODAL 4: REASSIGN DEPENDENCIES MODAL
+         ========================================================================= */}
+      {reassignTarget && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full overflow-hidden">
+            <div className="bg-[#012A7A] text-white px-6 py-4 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block">
+                  Safe Taxonomy Migration
+                </span>
+                <h3 className="text-base font-extrabold">
+                  Reassign Dependencies from {reassignTarget.sub.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isReassigning && setReassignTarget(null)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleConfirmReassign} className="p-6 space-y-4 text-xs">
+              <p className="text-slate-600 leading-relaxed">
+                Select an active replacement subcategory. Providers, Services, and Blog CTA links currently pointing to{' '}
+                <strong>{reassignTarget.sub.name}</strong> will be updated safely without deleting any provider or service records.
+              </p>
+              <div>
+                <label className="block font-bold uppercase text-slate-500 mb-1.5">
+                  Target Subcategory
+                </label>
+                <select
+                  required
+                  value={reassignToId}
+                  onChange={(e) => setReassignToId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-[#012A7A]"
+                >
+                  <option value="">Choose replacement subcategory...</option>
+                  {allActiveSubcategories
+                    .filter((s) => s.slug !== reassignTarget.sub.slug)
+                    .map((s) => (
+                      <option key={s._id || s.slug} value={s._id || s.slug}>
+                        {s.name} ({s.parentName})
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReassignTarget(null)}
+                  disabled={isReassigning}
+                  className="py-2 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!reassignToId || isReassigning}
+                  className="py-2 px-4 rounded-xl bg-[#012A7A] text-white font-bold disabled:opacity-50"
+                >
+                  {isReassigning ? 'Reassigning...' : 'Reassign Dependencies'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

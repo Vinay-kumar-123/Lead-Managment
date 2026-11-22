@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../services/api.js';
 import {
-  Users,
   CheckCircle2,
   XCircle,
-  Building2,
-  Phone,
-  Mail,
   MapPin,
-  Globe,
-  FileText,
-  Calendar,
   AlertCircle,
   ArrowLeft,
   ExternalLink,
   Image as ImageIcon,
-  ShieldCheck,
   Eye,
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
 } from 'lucide-react';
 
 export default function AdminApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
 
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +37,11 @@ export default function AdminApplicationDetailPage() {
 
   // Image lightbox modal
   const [previewImage, setPreviewImage] = useState(null);
+
+  // Delete modal state
+  const [deleteMode, setDeleteMode] = useState(null); // null | 'soft' | 'permanent'
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const fetchApplication = () => {
     setIsLoading(true);
@@ -109,6 +114,50 @@ export default function AdminApplicationDetailPage() {
     }
   };
 
+  const handleRestore = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    setError('');
+    setActionSuccess('');
+    try {
+      const res = await adminDeletionService.restoreApplication(id);
+      if (res?.success) {
+        setActionSuccess(res.message || 'Application restored from trash.');
+        fetchApplication();
+      }
+    } catch (err) {
+      setError(err.message || 'Restore failed');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason }) => {
+    if (!deleteMode || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const res =
+        deleteMode === 'permanent'
+          ? await adminDeletionService.permanentDeleteApplication(id)
+          : await adminDeletionService.softDeleteApplication(id, reason);
+
+      if (res?.success) {
+        setDeleteMode(null);
+        if (deleteMode === 'permanent') {
+          navigate('/admin/applications', { replace: true });
+        } else {
+          setActionSuccess(res.message || 'Application moved to trash.');
+          fetchApplication();
+        }
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Deletion failed');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <AdminLayout title="Application Details" subtitle="Loading record...">
@@ -177,14 +226,14 @@ export default function AdminApplicationDetailPage() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          {isPending && (
+        <div className="flex flex-wrap items-center gap-2">
+          {!application.isDeleted && isPending && (
             <>
               <button
                 type="button"
                 onClick={() => setShowRejectModal(true)}
                 disabled={isProcessing}
-                className="py-2 px-4 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors flex items-center gap-1.5"
+                className="py-2 px-4 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <XCircle className="w-4 h-4" />
                 <span>Reject</span>
@@ -201,7 +250,7 @@ export default function AdminApplicationDetailPage() {
             </>
           )}
 
-          {isApproved && (
+          {!application.isDeleted && isApproved && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4" />
@@ -218,11 +267,53 @@ export default function AdminApplicationDetailPage() {
             </div>
           )}
 
-          {isRejected && (
+          {!application.isDeleted && isRejected && (
             <span className="text-xs font-bold text-rose-600 flex items-center gap-1">
               <XCircle className="w-4 h-4" />
               <span>Application Rejected</span>
             </span>
+          )}
+
+          {!application.isDeleted ? (
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError('');
+                setDeleteMode('soft');
+              }}
+              disabled={isProcessing}
+              className="py-2 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              aria-label={`Move application ${application.businessName} to trash`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Move to Trash</span>
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleRestore}
+                disabled={isProcessing}
+                className="py-2 px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Restore</span>
+              </button>
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError('');
+                    setDeleteMode('permanent');
+                  }}
+                  disabled={isProcessing}
+                  className="py-2 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Permanently Delete</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -528,6 +619,33 @@ export default function AdminApplicationDetailPage() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteMode)}
+        onClose={() => !isDeleting && setDeleteMode(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteMode || 'soft'}
+        entityType="Partner Application"
+        recordName={application.businessName}
+        identifierLabel={`${application.referenceId} · ${application.contactPerson} · ${application.city}`}
+        description={
+          deleteMode === 'permanent'
+            ? 'This application will be permanently removed. Any linked Provider profile remains intact.'
+            : 'This application will be moved to Trash and excluded from pending review queues.'
+        }
+        impactItems={
+          deleteMode === 'permanent'
+            ? [
+                'Permanently deletes this partner application lead.',
+                linkedProvider
+                  ? `Linked Provider "${linkedProvider.businessName}" will remain active (unlinked).`
+                  : 'No linked Provider profile is affected.',
+              ]
+            : []
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

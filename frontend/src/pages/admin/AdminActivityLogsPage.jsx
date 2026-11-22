@@ -43,6 +43,15 @@ export default function AdminActivityLogsPage() {
   }, []);
 
   const getActionBadge = (action) => {
+    if (action.includes('PERMANENTLY_DELETED')) {
+      return 'bg-rose-100 text-rose-900 border-rose-300';
+    }
+    if (action.includes('SOFT_DELETED') || action.includes('ANONYMIZED')) {
+      return 'bg-amber-100 text-amber-900 border-amber-200';
+    }
+    if (action.includes('RESTORED') || action.includes('REASSIGNED')) {
+      return 'bg-teal-100 text-teal-800 border-teal-200';
+    }
     if (action.includes('APPROVED') || action.includes('SUCCESS') || action === 'LOGIN') {
       return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     }
@@ -60,6 +69,13 @@ export default function AdminActivityLogsPage() {
       title="System Activity & Audit Logs"
       subtitle="Immutable trail of administrative operations, security audits, and state transitions"
     >
+      <div className="mb-5 p-4 rounded-2xl bg-slate-900 text-slate-100 text-xs flex items-center gap-3 border border-slate-800">
+        <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+        <span>
+          <strong>Immutable Audit Trail:</strong> Activity logs are append-only security records. Deletion is intentionally restricted across all admin roles to preserve administrative accountability.
+        </span>
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         {isLoading ? (
           <div className="p-16 text-center">

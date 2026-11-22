@@ -98,6 +98,25 @@ const categorySchema = new mongoose.Schema(
       maxlength: [320, 'Meta description cannot exceed 320 characters'],
       default: '',
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    deleteReason: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   {
     timestamps: true,

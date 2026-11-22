@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal.jsx';
+import adminDeletionService from '../../services/adminDeletionService.js';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import {
   Users,
   Search,
-  Filter,
-  CheckCircle2,
-  Clock,
-  XCircle,
   ArrowRight,
-  RefreshCw
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function AdminApplicationsPage() {
-  const { token } = useAuth();
+  const { token, admin } = useAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const [searchParams, setSearchParams] = useSearchParams();
 
   const currentStatus = searchParams.get('status') || 'pending';
@@ -23,6 +25,12 @@ export default function AdminApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
   const fetchApplications = () => {
     setIsLoading(true);
@@ -62,6 +70,53 @@ export default function AdminApplicationsPage() {
     setSearchParams({ status });
   };
 
+  const handleRestore = async (app) => {
+    if (busyId === app._id) return;
+    setBusyId(app._id);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await adminDeletionService.restoreApplication(app._id);
+      if (res?.success) {
+        setSuccessMsg(res.message || `Application ${app.referenceId} restored.`);
+        fetchApplications();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to restore application');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleConfirmDelete = async ({ reason }) => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    setError('');
+    setSuccessMsg('');
+    try {
+      const { application, mode } = deleteTarget;
+      const res =
+        mode === 'permanent'
+          ? await adminDeletionService.permanentDeleteApplication(application._id)
+          : await adminDeletionService.softDeleteApplication(application._id, reason);
+      if (res?.success) {
+        setDeleteTarget(null);
+        setSuccessMsg(
+          res.message ||
+            (mode === 'permanent'
+              ? `Application ${application.referenceId} permanently deleted.`
+              : `Application ${application.referenceId} moved to trash.`)
+        );
+        fetchApplications();
+      }
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete partner application');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AdminLayout title="Partner Applications" subtitle="Review incoming service provider registrations">
       {/* Search & Filter Header */}
@@ -73,14 +128,17 @@ export default function AdminApplicationsPage() {
             { label: 'Approved', value: 'approved' },
             { label: 'Rejected', value: 'rejected' },
             { label: 'All Submissions', value: 'all' },
+            { label: 'Trash / Deleted', value: 'deleted' },
           ].map((tab) => (
             <button
               key={tab.value}
               type="button"
               onClick={() => handleTabChange(tab.value)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
                 currentStatus === tab.value
-                  ? 'bg-slate-900 text-white'
+                  ? tab.value === 'deleted'
+                    ? 'bg-rose-700 text-white'
+                    : 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
@@ -106,6 +164,13 @@ export default function AdminApplicationsPage() {
           </button>
         </form>
       </div>
+
+      {successMsg && (
+        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">
@@ -169,14 +234,60 @@ export default function AdminApplicationsPage() {
                         {app.status === 'new' ? 'PENDING' : app.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        to={`/admin/applications/${app._id}`}
-                        className="btn-secondary py-1 px-3 text-[11px] font-semibold inline-flex items-center gap-1"
-                      >
-                        <span>Review</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <Link
+                          to={`/admin/applications/${app._id}`}
+                          className="btn-secondary py-1 px-3 text-[11px] font-semibold inline-flex items-center gap-1"
+                        >
+                          <span>Review</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                        {!app.isDeleted ? (
+                          <button
+                            type="button"
+                            disabled={busyId === app._id}
+                            onClick={() => {
+                              setDeleteError('');
+                              setDeleteTarget({ application: app, mode: 'soft' });
+                            }}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
+                            title={`Move application ${app.referenceId} to trash`}
+                            aria-label={`Delete application ${app.businessName}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyId === app._id}
+                              onClick={() => handleRestore(app)}
+                              className="py-1 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title={`Restore ${app.businessName}`}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Restore</span>
+                            </button>
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                disabled={busyId === app._id}
+                                onClick={() => {
+                                  setDeleteError('');
+                                  setDeleteTarget({ application: app, mode: 'permanent' });
+                                }}
+                                className="py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                title={`Permanently delete ${app.businessName}`}
+                                aria-label={`Permanently delete application ${app.businessName}`}
+                              >
+                                <ShieldAlert className="w-3 h-3" />
+                                <span>Purge</span>
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -185,6 +296,36 @@ export default function AdminApplicationsPage() {
           </div>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        mode={deleteTarget?.mode || 'soft'}
+        entityType="Partner Application"
+        recordName={deleteTarget?.application?.businessName || ''}
+        identifierLabel={
+          deleteTarget?.application
+            ? `${deleteTarget.application.referenceId} · ${deleteTarget.application.contactPerson} · ${deleteTarget.application.city}`
+            : ''
+        }
+        description={
+          deleteTarget?.mode === 'permanent'
+            ? 'This application will be permanently deleted. If an approved Provider profile exists from this application, that Provider profile and any shared shop image will be preserved safely.'
+            : 'This partner application will be moved to Trash and excluded from active review queues.'
+        }
+        impactItems={
+          deleteTarget?.mode === 'permanent'
+            ? [
+                'Permanently deletes the partner application lead record.',
+                'Any linked Provider profile remains intact (sourceApplicationId is safely unlinked).',
+                'Uploaded shop image is deleted only if not shared by a Provider profile.',
+              ]
+            : []
+        }
+        isSubmitting={isDeleting}
+        errorMessage={deleteError}
+      />
     </AdminLayout>
   );
 }

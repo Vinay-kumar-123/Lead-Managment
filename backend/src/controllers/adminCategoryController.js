@@ -142,6 +142,172 @@ export const adminCategoryController = {
       return handleControllerError(err, res, next);
     }
   },
+
+  /**
+   * GET /api/v1/admin/categories/:id/dependencies
+   * Checks dependent providers, services, enquiries, and blogs before category deletion.
+   */
+  async getSubcategoryDependencies(req, res, next) {
+    try {
+      const report = await categoryService.getSubcategoryDependencies(req.params.id);
+      return successResponse(res, report);
+    } catch (err) {
+      return handleControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * DELETE /api/v1/admin/categories/:id
+   * Soft-deletes (archives) a subcategory while preserving dependent providers and services.
+   */
+  async softDeleteSubcategory(req, res, next) {
+    try {
+      const reason = String(req.body?.reason || req.query?.reason || '').trim();
+      const deleted = await categoryService.softDeleteSubcategory(
+        req.params.id,
+        req.admin?.email || 'admin',
+        reason
+      );
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email || 'admin',
+        action: 'CATEGORY_SOFT_DELETED',
+        targetType: 'CATEGORY',
+        targetId: String(deleted._id),
+        details: {
+          name: deleted.name,
+          slug: deleted.slug,
+          parentSlug: deleted.parentSlug,
+          deletionMode: 'SOFT_DELETE',
+          result: 'SUCCESS',
+        },
+        req,
+      });
+
+      return successResponse(
+        res,
+        deleted,
+        `Subcategory "${deleted.name}" moved to trash safely.`
+      );
+    } catch (err) {
+      return handleControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * POST /api/v1/admin/categories/:id/restore
+   * Restores a soft-deleted subcategory in an inactive (staged) state.
+   */
+  async restoreSubcategory(req, res, next) {
+    try {
+      const restored = await categoryService.restoreSubcategory(req.params.id);
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email || 'admin',
+        action: 'CATEGORY_RESTORED',
+        targetType: 'CATEGORY',
+        targetId: String(restored._id),
+        details: {
+          name: restored.name,
+          slug: restored.slug,
+          parentSlug: restored.parentSlug,
+          result: 'SUCCESS',
+        },
+        req,
+      });
+
+      return successResponse(
+        res,
+        restored,
+        `Subcategory "${restored.name}" restored as inactive. Activate it when ready.`
+      );
+    } catch (err) {
+      return handleControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * POST /api/v1/admin/categories/:id/reassign
+   * Reassigns dependent providers, services, and blogs to another active subcategory.
+   */
+  async reassignSubcategoryDependencies(req, res, next) {
+    try {
+      const { targetSubcategoryId } = req.body || {};
+      if (!targetSubcategoryId) {
+        return errorResponse(res, 'targetSubcategoryId is required for dependency reassignment.', 400);
+      }
+
+      const result = await categoryService.reassignSubcategoryDependencies(
+        req.params.id,
+        targetSubcategoryId
+      );
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email || 'admin',
+        action: 'CATEGORY_REASSIGNED',
+        targetType: 'CATEGORY',
+        targetId: String(result.source._id),
+        details: {
+          sourceSlug: result.source.slug,
+          targetSlug: result.target.slug,
+          reassigned: result.reassigned,
+          result: 'SUCCESS',
+        },
+        req,
+      });
+
+      return successResponse(
+        res,
+        result,
+        `Dependencies reassigned from "${result.source.name}" to "${result.target.name}".`
+      );
+    } catch (err) {
+      return handleControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * DELETE /api/v1/admin/categories/:id/permanent
+   * Permanently deletes an unused subcategory (SUPER_ADMIN only).
+   */
+  async permanentDeleteSubcategory(req, res, next) {
+    try {
+      const confirmed =
+        req.body?.confirmPermanent === true ||
+        req.query?.confirm === 'true';
+      if (!confirmed) {
+        return errorResponse(
+          res,
+          'Explicit confirmation (confirmPermanent: true) is required for permanent deletion.',
+          400
+        );
+      }
+
+      const result = await categoryService.permanentDeleteSubcategory(req.params.id);
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email || 'admin',
+        action: 'CATEGORY_PERMANENTLY_DELETED',
+        targetType: 'CATEGORY',
+        targetId: String(result.deletedId),
+        details: {
+          name: result.name,
+          slug: result.slug,
+          deletionMode: 'PERMANENT_DELETE',
+          result: 'SUCCESS',
+        },
+        req,
+      });
+
+      return successResponse(
+        res,
+        result,
+        `Subcategory "${result.name}" permanently deleted.`
+      );
+    } catch (err) {
+      return handleControllerError(err, res, next);
+    }
+  },
 };
 
 export default adminCategoryController;

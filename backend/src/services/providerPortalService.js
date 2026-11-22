@@ -637,6 +637,15 @@ export const providerPortalService = {
 
       let account = accountBySub || accountByEmail;
 
+      if (account && (account.isDeleted === true || account.isActive === false)) {
+        throw createHttpError(
+          'This provider account has been deactivated or removed by Dealsathi administration.',
+          403,
+          null,
+          'PROVIDER_ACCOUNT_DISABLED'
+        );
+      }
+
       // Check if an existing Provider business profile matches by googleSub or verified email
       let linkedProvider = null;
       if (account?.providerProfileId) {
@@ -660,6 +669,15 @@ export const providerPortalService = {
         }
 
         linkedProvider = providerBySub || providerByEmail;
+      }
+
+      if (linkedProvider && linkedProvider.isDeleted === true) {
+        throw createHttpError(
+          'This provider business profile has been removed by Dealsathi administration.',
+          403,
+          null,
+          'PROVIDER_PROFILE_DELETED'
+        );
       }
 
       if (!account) {
@@ -738,6 +756,15 @@ export const providerPortalService = {
     }
 
     let account = accBySub || accByEmail;
+    if (account && (account.isDeleted === true || account.isActive === false)) {
+      throw createHttpError(
+        'This provider account has been deactivated or removed by Dealsathi administration.',
+        403,
+        null,
+        'PROVIDER_ACCOUNT_DISABLED'
+      );
+    }
+
     let linkedProvider = null;
 
     if (account?.providerProfileId) {
@@ -758,6 +785,15 @@ export const providerPortalService = {
         );
       }
       linkedProvider = provBySub || provByEmail || null;
+    }
+
+    if (linkedProvider && linkedProvider.isDeleted === true) {
+      throw createHttpError(
+        'This provider business profile has been removed by Dealsathi administration.',
+        403,
+        null,
+        'PROVIDER_PROFILE_DELETED'
+      );
     }
 
     if (!account) {
@@ -828,6 +864,7 @@ export const providerPortalService = {
         sessionToken: cleanToken,
         sessionExpiresAt: { $gt: new Date() },
         isActive: { $ne: false },
+        isDeleted: { $ne: true },
       });
       if (!account) return null;
 
@@ -839,11 +876,15 @@ export const providerPortalService = {
         provider = await Provider.findOne({
           $or: [{ accountId: account._id }, { googleSub: account.googleSub }],
         });
-        if (provider && !account.providerProfileId) {
+        if (provider && !provider.isDeleted && !account.providerProfileId) {
           account.providerProfileId = provider._id;
           account.onboardingCompleted = true;
           await account.save();
         }
+      }
+
+      if (provider && provider.isDeleted === true) {
+        return null;
       }
 
       return { account, provider };
@@ -853,6 +894,7 @@ export const providerPortalService = {
       (a) =>
         a.sessionToken === cleanToken &&
         a.isActive !== false &&
+        a.isDeleted !== true &&
         new Date(a.sessionExpiresAt) > new Date()
     );
     if (!account) return null;
@@ -867,6 +909,10 @@ export const providerPortalService = {
       provider = inMemoryPortal.providers.find(
         (p) => String(p.accountId) === String(account._id) || p.googleSub === account.googleSub
       );
+    }
+
+    if (provider && provider.isDeleted === true) {
+      return null;
     }
 
     return { account, provider };
@@ -1292,10 +1338,13 @@ export const providerPortalService = {
 
     if (isDbActive()) {
       const [allServices, enquiries] = await Promise.all([
-        ProviderService.find({ providerId: provider._id }).sort({ createdAt: -1 }).lean(),
+        ProviderService.find({ providerId: provider._id, isDeleted: { $ne: true } })
+          .sort({ createdAt: -1 })
+          .lean(),
         Lead.find({
           type: 'enquiry',
           assignedProviderId: provider._id,
+          isDeleted: { $ne: true },
         })
           .sort({ createdAt: -1 })
           .lean(),
@@ -1418,12 +1467,12 @@ export const providerPortalService = {
 
     let list = [];
     if (isDbActive()) {
-      list = await ProviderService.find({ providerId: provider._id })
+      list = await ProviderService.find({ providerId: provider._id, isDeleted: { $ne: true } })
         .sort({ createdAt: -1 })
         .lean();
     } else {
       list = inMemoryPortal.services
-        .filter((s) => String(s.providerId) === String(provider._id))
+        .filter((s) => String(s.providerId) === String(provider._id) && s.isDeleted !== true)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
@@ -1759,6 +1808,7 @@ export const providerPortalService = {
       const enquiries = await Lead.find({
         type: 'enquiry',
         assignedProviderId: provider._id,
+        isDeleted: { $ne: true },
       })
         .sort({ createdAt: -1 })
         .select(
@@ -1769,7 +1819,7 @@ export const providerPortalService = {
     }
 
     return inMemoryPortal.enquiries
-      .filter((e) => String(e.assignedProviderId) === String(provider._id))
+      .filter((e) => String(e.assignedProviderId) === String(provider._id) && e.isDeleted !== true)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   },
 };

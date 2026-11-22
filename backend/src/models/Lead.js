@@ -183,6 +183,39 @@ const leadSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    // Soft Delete & Privacy Anonymization Governance
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    deleteReason: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    isAnonymized: {
+      type: Boolean,
+      default: false,
+    },
+    anonymizedAt: {
+      type: Date,
+      default: null,
+    },
+    anonymizedBy: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   {
     timestamps: true,
@@ -190,6 +223,7 @@ const leadSchema = new mongoose.Schema(
 );
 
 leadSchema.index({ type: 1, status: 1, createdAt: -1 });
+leadSchema.index({ type: 1, isDeleted: 1, createdAt: -1 });
 
 export const Lead = mongoose.model('Lead', leadSchema);
 export default Lead;

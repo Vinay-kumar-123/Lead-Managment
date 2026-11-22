@@ -1,4 +1,6 @@
 import Blog from '../models/Blog.js';
+import deletionService, { assertValidObjectId } from '../services/deletionService.js';
+import { escapeRegex } from '../services/categoryService.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { logAdminActivity } from '../services/activityLogger.js';
 import logger from '../utils/logger.js';
@@ -12,21 +14,36 @@ function createSlug(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+function handleBlogControllerError(err, res, next) {
+  if (err && err.statusCode) {
+    return errorResponse(res, err.message, err.statusCode, err.details || null);
+  }
+  if (err && err.name === 'CastError') {
+    return errorResponse(res, 'Invalid blog identifier format.', 400);
+  }
+  return next(err);
+}
+
 export const adminBlogController = {
   /**
    * GET /api/v1/admin/blogs
    */
   async getBlogs(req, res, next) {
     try {
-      const { status, search } = req.query;
+      const { status, search, deleted } = req.query;
       const query = {};
 
-      if (status && status !== 'all') {
-        query.status = status;
+      if (status === 'deleted' || deleted === 'only') {
+        query.isDeleted = true;
+      } else {
+        query.isDeleted = { $ne: true };
+        if (status && status !== 'all') {
+          query.status = status;
+        }
       }
 
-      if (search) {
-        const clean = search.trim();
+      if (search && typeof search === 'string' && search.trim()) {
+        const clean = escapeRegex(search.trim().slice(0, 100));
         query.$or = [
           { title: { $regex: clean, $options: 'i' } },
           { excerpt: { $regex: clean, $options: 'i' } },
@@ -37,7 +54,7 @@ export const adminBlogController = {
       const blogs = await Blog.find(query).sort({ createdAt: -1 }).lean();
       return successResponse(res, blogs);
     } catch (err) {
-      next(err);
+      return handleBlogControllerError(err, res, next);
     }
   },
 
@@ -46,13 +63,14 @@ export const adminBlogController = {
    */
   async getBlogById(req, res, next) {
     try {
-      const blog = await Blog.findById(req.params.id).lean();
+      const cleanId = assertValidObjectId(req.params.id, 'blog');
+      const blog = await Blog.findById(cleanId).lean();
       if (!blog) {
         return errorResponse(res, 'Blog article not found', 404);
       }
       return successResponse(res, blog);
     } catch (err) {
-      next(err);
+      return handleBlogControllerError(err, res, next);
     }
   },
 
@@ -179,29 +197,98 @@ export const adminBlogController = {
 
   /**
    * DELETE /api/v1/admin/blogs/:id
+   * Soft-deletes (archives) a blog article so it can be restored or permanently purged later.
    */
   async archiveBlog(req, res, next) {
     try {
-      const blog = await Blog.findById(req.params.id);
-      if (!blog) {
-        return errorResponse(res, 'Blog article not found', 404);
-      }
-
-      blog.status = 'archived';
-      await blog.save();
+      const reason = String(req.body?.reason || req.query?.reason || '').trim();
+      const blog = await deletionService.softDeleteBlog(
+        req.params.id,
+        req.admin?.email || 'admin',
+        reason
+      );
 
       await logAdminActivity({
         adminEmail: req.admin?.email,
-        action: 'BLOG_ARCHIVED',
+        action: 'BLOG_SOFT_DELETED',
         targetType: 'BLOG',
         targetId: String(blog._id),
-        details: { title: blog.title, slug: blog.slug },
+        details: {
+          title: blog.title,
+          slug: blog.slug,
+          deletionMode: 'SOFT_DELETE',
+          result: 'SUCCESS',
+        },
         req,
       });
 
-      return successResponse(res, blog, 'Blog article archived successfully');
+      return successResponse(res, blog, 'Blog article moved to trash (archived) successfully');
     } catch (err) {
-      next(err);
+      return handleBlogControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * POST /api/v1/admin/blogs/:id/restore
+   * Restores a soft-deleted/archived blog article to draft status.
+   */
+  async restoreBlog(req, res, next) {
+    try {
+      const blog = await deletionService.restoreBlog(req.params.id);
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email,
+        action: 'BLOG_RESTORED',
+        targetType: 'BLOG',
+        targetId: String(blog._id),
+        details: { title: blog.title, slug: blog.slug, result: 'SUCCESS' },
+        req,
+      });
+
+      return successResponse(res, blog, 'Blog article restored to draft successfully');
+    } catch (err) {
+      return handleBlogControllerError(err, res, next);
+    }
+  },
+
+  /**
+   * DELETE /api/v1/admin/blogs/:id/permanent
+   * Permanently deletes a blog article (SUPER_ADMIN only).
+   */
+  async permanentDeleteBlog(req, res, next) {
+    try {
+      const confirmed =
+        req.body?.confirmPermanent === true || req.query?.confirm === 'true';
+      if (!confirmed) {
+        return errorResponse(
+          res,
+          'Explicit confirmation (confirmPermanent: true) is required for permanent blog deletion.',
+          400
+        );
+      }
+
+      const result = await deletionService.permanentDeleteBlog(req.params.id, {
+        adminEmail: req.admin?.email || 'admin',
+      });
+
+      await logAdminActivity({
+        adminEmail: req.admin?.email,
+        action: 'BLOG_PERMANENTLY_DELETED',
+        targetType: 'BLOG',
+        targetId: result.deletedId,
+        details: {
+          title: result.title,
+          slug: result.slug,
+          deletionMode: 'PERMANENT_DELETE',
+          mediaCleanupStatus: result.mediaCleanup?.status,
+          result: result.mediaCleanup?.status === 'PARTIAL_FAILURE' ? 'PARTIAL_FAILURE' : 'SUCCESS',
+        },
+        req,
+      });
+
+      return successResponse(res, result, `Blog article "${result.title}" permanently deleted.`);
+    } catch (err) {
+      return handleBlogControllerError(err, res, next);
     }
   },
 };

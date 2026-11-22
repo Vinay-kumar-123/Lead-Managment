@@ -182,6 +182,62 @@ export const categoryService = {
     }
     return res;
   },
+
+  /**
+   * Admin: Inspect subcategory dependencies before deletion
+   */
+  async getSubcategoryDependencies(id) {
+    return api.get(`/admin/categories/${encodeURIComponent(id)}/dependencies`);
+  },
+
+  /**
+   * Admin: Soft-delete (move to trash) a subcategory
+   */
+  async softDeleteSubcategory(id, reason = '') {
+    const res = await api.delete(`/admin/categories/${encodeURIComponent(id)}`, {
+      data: { reason },
+    });
+    if (res?.success) {
+      this.invalidateCache();
+      this.getPublicCategories({ forceRefresh: true }).catch(() => {});
+    }
+    return res;
+  },
+
+  /**
+   * Admin: Restore a soft-deleted subcategory (restored as inactive)
+   */
+  async restoreSubcategory(id) {
+    const res = await api.post(`/admin/categories/${encodeURIComponent(id)}/restore`, {});
+    if (res?.success) {
+      this.invalidateCache();
+      this.getPublicCategories({ forceRefresh: true }).catch(() => {});
+    }
+    return res;
+  },
+
+  /**
+   * Admin: Reassign dependent providers, services, and blogs to another active subcategory
+   */
+  async reassignSubcategoryDependencies(id, targetSubcategoryId) {
+    return api.post(`/admin/categories/${encodeURIComponent(id)}/reassign`, {
+      targetSubcategoryId,
+    });
+  },
+
+  /**
+   * Super Admin: Permanently delete an unused subcategory
+   */
+  async permanentDeleteSubcategory(id) {
+    const res = await api.delete(`/admin/categories/${encodeURIComponent(id)}/permanent`, {
+      data: { confirmPermanent: true },
+    });
+    if (res?.success) {
+      this.invalidateCache();
+      this.getPublicCategories({ forceRefresh: true }).catch(() => {});
+    }
+    return res;
+  },
 };
 
 export default categoryService;
