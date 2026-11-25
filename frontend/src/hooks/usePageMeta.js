@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { siteConfig, resolveAbsoluteImageUrl } from '../utils/seo.js';
+
+export const SeoCollectorContext = createContext(null);
 
 const ARTICLE_META_PROPERTIES = [
   'article:published_time',
@@ -33,6 +35,20 @@ export function usePageMeta({
   article = null,
   jsonLd = null,
 }) {
+  const seoCollector = useContext(SeoCollectorContext);
+  if (seoCollector) {
+    seoCollector.meta = {
+      title,
+      description,
+      canonical,
+      robots,
+      ogType,
+      ogImage,
+      article,
+      jsonLd,
+    };
+  }
+
   const serializedJsonLd = jsonLd ? JSON.stringify(jsonLd) : null;
   const serializedArticle = article
     ? JSON.stringify({
