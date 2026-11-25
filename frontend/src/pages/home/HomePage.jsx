@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Building,
+  RotateCcw,
 } from 'lucide-react';
 import { usePageMeta } from '../../hooks/usePageMeta.js';
 import { useCategories } from '../../hooks/useCategories.js';
@@ -44,13 +45,20 @@ export default function HomePage() {
   // State for Featured Verified Providers (live backend query)
   const [featuredProviders, setFeaturedProviders] = useState([]);
   const [providerStatus, setProviderStatus] = useState('loading'); // 'loading' | 'success' | 'empty' | 'error'
+  const [providerRetryNonce, setProviderRetryNonce] = useState(0);
 
   useEffect(() => {
+    const controller = new AbortController();
     let isMounted = true;
+    setProviderStatus('loading');
 
     async function loadProviders() {
       try {
-        const response = await providerService.getProviders({ page: 1, limit: 3 });
+        const response = await providerService.getProviders({
+          page: 1,
+          limit: 3,
+          signal: controller.signal,
+        });
         if (!isMounted) return;
         const list = Array.isArray(response?.data)
           ? response.data.filter((p) => !p.isDevSample)
@@ -62,8 +70,8 @@ export default function HomePage() {
           setFeaturedProviders([]);
           setProviderStatus('empty');
         }
-      } catch {
-        if (!isMounted) return;
+      } catch (err) {
+        if (!isMounted || err?.name === 'AbortError' || controller.signal.aborted) return;
         setFeaturedProviders([]);
         setProviderStatus('error');
       }
@@ -72,19 +80,27 @@ export default function HomePage() {
     loadProviders();
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, []);
+  }, [providerRetryNonce]);
 
   // State for Blog Section (live backend query)
   const [blogs, setBlogs] = useState([]);
   const [blogStatus, setBlogStatus] = useState('loading'); // 'loading' | 'success' | 'empty' | 'error'
+  const [blogRetryNonce, setBlogRetryNonce] = useState(0);
 
   useEffect(() => {
+    const controller = new AbortController();
     let isMounted = true;
+    setBlogStatus('loading');
 
     async function loadBlogs() {
       try {
-        const response = await blogService.getBlogs({ page: 1, limit: 3 });
+        const response = await blogService.getBlogs({
+          page: 1,
+          limit: 3,
+          signal: controller.signal,
+        });
         if (!isMounted) return;
 
         const fetchedBlogs = Array.isArray(response?.data?.blogs)
@@ -103,8 +119,8 @@ export default function HomePage() {
           setBlogs([]);
           setBlogStatus('error');
         }
-      } catch {
-        if (!isMounted) return;
+      } catch (err) {
+        if (!isMounted || err?.name === 'AbortError' || controller.signal.aborted) return;
         setBlogs([]);
         setBlogStatus('error');
       }
@@ -114,8 +130,9 @@ export default function HomePage() {
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, []);
+  }, [blogRetryNonce]);
 
   const normalizeAuthorName = (name) =>
     (name ? String(name).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : 'Dealsathi Advisory');
@@ -311,6 +328,18 @@ export default function HomePage() {
               description="Submit your service requirement and our operations team will verify and match you directly with qualified specialists."
               actionLabel="Submit an Enquiry"
               actionHref="/get-quote"
+              action={
+                providerStatus === 'error' ? (
+                  <button
+                    type="button"
+                    onClick={() => setProviderRetryNonce((n) => n + 1)}
+                    className="btn-secondary text-sm py-2 px-4 inline-flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                    <span>Retry Loading Providers</span>
+                  </button>
+                ) : null
+              }
             />
           )}
         </div>
@@ -404,6 +433,18 @@ export default function HomePage() {
               description="Explore our marketplace categories or visit the editorial archive for hiring checklists and cost guides."
               actionLabel="Visit Blog Archive"
               actionHref="/blog"
+              action={
+                blogStatus === 'error' ? (
+                  <button
+                    type="button"
+                    onClick={() => setBlogRetryNonce((n) => n + 1)}
+                    className="btn-secondary text-sm py-2 px-4 inline-flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                    <span>Retry Loading Guides</span>
+                  </button>
+                ) : null
+              }
             />
           )}
         </div>

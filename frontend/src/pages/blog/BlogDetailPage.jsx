@@ -16,6 +16,8 @@ import {
   User,
   ShieldCheck,
   FileQuestion,
+  AlertCircle,
+  RotateCcw,
   Layers,
   ArrowLeft
 } from 'lucide-react';
@@ -24,9 +26,13 @@ export default function BlogDetailPage() {
   const { slug } = useParams();
 
   const [article, setArticle] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'not_found' | 'error'
+  const [retryNonce, setRetryNonce] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  const isLoading = status === 'loading';
+  const notFound = status === 'not_found';
+  const hasLoadError = status === 'error';
 
   // Normalize any legacy KONNEVIA strings in stored database article metadata
   const normalizeBrandText = (str) => (str ? String(str).replace(/\bKONNEVIA\b/gi, 'Dealsathi') : str);
@@ -81,9 +87,13 @@ export default function BlogDetailPage() {
       ? normalizeBrandText(article.metaTitle || article.title)
       : notFound
       ? 'Article Not Found'
+      : hasLoadError
+      ? 'Editorial Guide Temporarily Unavailable'
       : 'Editorial Guide',
     description: article
       ? normalizeBrandText(article.metaDescription || article.excerpt)
+      : notFound
+      ? 'The requested editorial article could not be found.'
       : 'Editorial guide and service checklist on Dealsathi.',
     canonical: articleCanonical,
     robots: notFound ? 'noindex, nofollow' : null,
@@ -94,30 +104,41 @@ export default function BlogDetailPage() {
   });
 
   useEffect(() => {
-    setIsLoading(true);
-    setNotFound(false);
+    const controller = new AbortController();
+    let isMounted = true;
+
+    setArticle(null);
+    setStatus('loading');
 
     blogService
-      .getBlogBySlug(slug)
+      .getBlogBySlug(slug, { signal: controller.signal })
       .then((res) => {
-        if (res.success && res.data) {
+        if (!isMounted) return;
+        if (res?.success && res?.data) {
           setArticle(res.data);
+          setStatus('success');
         } else {
-          setNotFound(true);
+          setStatus('error');
         }
       })
       .catch((err) => {
-        // C1 Fix: Expected 404 (article not found / unpublished) is a normal navigation event —
-        // only log unexpected errors to avoid false positives in monitoring and test runners.
-        if (err.status !== 404) {
-          console.error('Error fetching blog detail:', err);
+        if (!isMounted || err?.name === 'AbortError' || controller.signal.aborted) {
+          return;
         }
-        setNotFound(true);
-      })
-      .finally(() => {
-        setIsLoading(false);
+        // Only treat confirmed HTTP 404 responses as missing/noindex; temporary network/5xx errors remain retryable.
+        if (err?.status === 404) {
+          setStatus('not_found');
+          return;
+        }
+        console.error('Error fetching blog detail:', err);
+        setStatus('error');
       });
-  }, [slug]);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [slug, retryNonce]);
 
   const handleShare = () => {
     if (navigator.clipboard) {
@@ -132,6 +153,30 @@ export default function BlogDetailPage() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center py-20 px-4 bg-background">
         <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-text-muted">Loading article content...</p>
+      </div>
+    );
+  }
+
+  if (hasLoadError) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center py-16 px-4 bg-background">
+        <EmptyState
+          icon={AlertCircle}
+          title="Unable to Load Article Right Now"
+          description="Our editorial service is taking longer than expected to respond. Please retry or browse the guide archive."
+          actionLabel="Browse All Guides"
+          actionHref="/blog"
+          action={
+            <button
+              type="button"
+              onClick={() => setRetryNonce((n) => n + 1)}
+              className="btn-secondary text-sm py-2.5 px-5 inline-flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" aria-hidden="true" />
+              <span>Retry Loading Article</span>
+            </button>
+          }
+        />
       </div>
     );
   }

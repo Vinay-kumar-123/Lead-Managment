@@ -18,28 +18,57 @@ import {
   Sparkles,
   ShieldCheck,
   Building,
-  Phone
+  Phone,
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 
 export default function ProviderProfilePage() {
   const { slug } = useParams();
   const [provider, setProvider] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'not_found' | 'error'
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  const isLoading = status === 'loading';
+  const notFound = status === 'not_found';
+  const hasLoadError = status === 'error';
 
   useEffect(() => {
-    setIsLoading(true);
+    const controller = new AbortController();
+    let isMounted = true;
+
+    setProvider(null);
+    setStatus('loading');
+
     providerService
-      .getProviderBySlug(slug)
+      .getProviderBySlug(slug, { signal: controller.signal })
       .then((data) => {
-        setProvider(data);
+        if (!isMounted) return;
+        if (data) {
+          setProvider(data);
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
       })
-      .catch(() => {
-        setProvider(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
+      .catch((err) => {
+        if (!isMounted || err?.name === 'AbortError' || controller.signal.aborted) {
+          return;
+        }
+        // Only treat confirmed HTTP 404 responses as missing/noindex; temporary failures remain retryable.
+        if (err?.status === 404) {
+          setStatus('not_found');
+          return;
+        }
+        console.error('Error fetching provider profile:', err);
+        setStatus('error');
       });
-  }, [slug]);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [slug, retryNonce]);
 
   const providerSchemas = provider
     ? [
@@ -56,12 +85,16 @@ export default function ProviderProfilePage() {
       ? `${provider.businessName} — Dealsathi Partner Profile`
       : isLoading
       ? 'Loading Provider Profile — Dealsathi'
-      : 'Provider Not Found — Dealsathi',
+      : notFound
+      ? 'Provider Not Found — Dealsathi'
+      : 'Provider Profile Temporarily Unavailable — Dealsathi',
     description: provider
       ? provider.metaDescription || provider.description
-      : 'The requested provider profile does not exist in the Dealsathi directory.',
+      : notFound
+      ? 'The requested provider profile does not exist in the Dealsathi directory.'
+      : 'Unable to load this provider profile right now. Please try again shortly.',
     canonical: provider ? `https://dealsathi.in/providers/${provider.slug}` : null,
-    robots: !isLoading && !provider ? 'noindex, nofollow' : null,
+    robots: notFound ? 'noindex, nofollow' : null,
     jsonLd: providerSchemas,
   });
 
@@ -74,7 +107,31 @@ export default function ProviderProfilePage() {
     );
   }
 
-  if (!provider) {
+  if (hasLoadError) {
+    return (
+      <div className="bg-background min-h-[70vh] flex items-center justify-center py-16 px-4">
+        <EmptyState
+          icon={AlertCircle}
+          title="Unable to Load Provider Profile Right Now"
+          description="Our directory service is taking longer than expected to respond. Please retry or browse other verified providers."
+          actionLabel="View All Providers"
+          actionHref="/providers"
+          action={
+            <button
+              type="button"
+              onClick={() => setRetryNonce((n) => n + 1)}
+              className="btn-secondary text-sm py-2.5 px-5 inline-flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" aria-hidden="true" />
+              <span>Try Again</span>
+            </button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (notFound || !provider) {
     return (
       <div className="bg-background min-h-[70vh] flex items-center justify-center py-16 px-4">
         <EmptyState

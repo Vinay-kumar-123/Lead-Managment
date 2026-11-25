@@ -79,6 +79,7 @@ export const providerService = {
     limit = 12,
     sort = '',
     strictLocation = false,
+    signal,
   } = {}) {
     try {
       const params = new URLSearchParams();
@@ -91,7 +92,10 @@ export const providerService = {
       if (sort) params.set('sort', sort);
       if (strictLocation) params.set('strictLocation', 'true');
 
-      const res = await api.get(`/providers?${params.toString()}`);
+      const res = await api.get(`/providers?${params.toString()}`, {
+        retry: true,
+        signal,
+      });
       if (res && res.success && res.data && Array.isArray(res.data.providers)) {
         return {
           data: res.data.providers,
@@ -131,15 +135,19 @@ export const providerService = {
     return { services: [], cities: [], providers: [] };
   },
 
-  async getProviderBySlug(slug) {
+  async getProviderBySlug(slug, { signal } = {}) {
     const cleanSlug = String(slug || '').toLowerCase().trim();
 
     try {
-      const res = await api.get(`/providers/${cleanSlug}`);
+      const res = await api.get(`/providers/${encodeURIComponent(cleanSlug)}`, {
+        retry: true,
+        signal,
+      });
       if (res && res.success && res.data) {
         return res.data;
       }
     } catch (err) {
+      if (err?.name === 'AbortError') throw err;
       const isNetworkUnavailable = !err?.status || err.status === 0 || err.status >= 500;
       if (isNetworkUnavailable && isDevSeedFallbackEnabled()) {
         const seed = getSeedProviderBySlug(cleanSlug);

@@ -170,6 +170,9 @@ export function usePageMeta({
     return () => {
       removeDynamicJsonLdScripts();
       removeArticleMetaTags();
+      if (robots) {
+        document.querySelectorAll('meta[name="robots"]').forEach((el) => el.remove());
+      }
     };
   }, [title, description, canonical, robots, ogType, ogImage, serializedArticle, serializedJsonLd]);
 }
