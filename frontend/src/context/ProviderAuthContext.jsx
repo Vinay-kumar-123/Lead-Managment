@@ -34,7 +34,7 @@ export function ProviderAuthProvider({ children }) {
     }
   });
 
-  const [isLoading, setIsLoading] = useState(() => Boolean(token));
+  const [isLoading, setIsLoading] = useState(true);
 
   const persistSession = useCallback((nextToken, nextAccount, nextProvider) => {
     if (nextToken !== undefined) setToken(nextToken);

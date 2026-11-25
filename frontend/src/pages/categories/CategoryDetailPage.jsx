@@ -60,13 +60,8 @@ export default function CategoryDetailPage() {
     };
   }, [category?.slug]);
 
-  const categoryTitle = category
-    ? category.metaTitle ||
-      `${/\bservices$/i.test(category.name) ? category.name : `${category.name} Services`} — Dealsathi`
-    : 'Category Not Found — Dealsathi';
-
   usePageMeta({
-    title: categoryTitle,
+    title: category ? `${category.name} Services — Dealsathi` : 'Category Not Found — Dealsathi',
     description: category
       ? category.metaDescription || category.description
       : 'The requested category does not exist in the Dealsathi marketplace directory.',

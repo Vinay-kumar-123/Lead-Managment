@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
-  const [isLoading, setIsLoading] = useState(() => Boolean(token));
+  const [isLoading, setIsLoading] = useState(true);
 
   const clearLocalSession = useCallback(() => {
     setToken(null);
