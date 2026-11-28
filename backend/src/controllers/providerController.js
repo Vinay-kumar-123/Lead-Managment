@@ -4,6 +4,11 @@ import {
   getSearchSuggestions,
 } from '../services/providerSearchService.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
+import {
+  PUBLIC_PROVIDER_PROJECTION,
+  applyPublicProjection,
+  toPublicProviderDto,
+} from '../utils/publicProviderDto.js';
 import logger from '../utils/logger.js';
 
 export const providerController = {
@@ -73,25 +78,24 @@ export const providerController = {
       const { slug } = req.params;
       const cleanSlug = String(slug || '').toLowerCase().trim();
 
-      const provider = await Provider.findOne({
+      if (!cleanSlug) {
+        return errorResponse(res, 'Provider profile slug is required.', 404);
+      }
+
+      const query = Provider.findOne({
         slug: cleanSlug,
         isDeleted: { $ne: true },
         verificationStatus: 'VERIFIED',
         publicationStatus: 'PUBLISHED',
-      }).lean();
+      });
+      applyPublicProjection(query, PUBLIC_PROVIDER_PROJECTION);
+      const provider = await query.lean();
 
       if (!provider) {
         return errorResponse(res, `Provider profile with slug "${cleanSlug}" was not found or is unpublished.`, 404);
       }
 
-      delete provider.searchTokens;
-      delete provider.locationTokens;
-
-      if (!provider.consentToDisplayPhone) {
-        provider.contactNumber = null;
-      }
-
-      return successResponse(res, provider);
+      return successResponse(res, toPublicProviderDto(provider));
     } catch (err) {
       next(err);
     }

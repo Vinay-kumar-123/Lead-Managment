@@ -4,6 +4,12 @@ import ProviderService from '../models/ProviderService.js';
 import Category from '../models/Category.js';
 import categoryService, { createSlug, escapeRegex } from './categoryService.js';
 import {
+  PUBLIC_PROVIDER_SEARCH_PROJECTION,
+  applyPublicProjection,
+  toPublicProviderDto,
+  toPublicProviderSuggestionDto,
+} from '../utils/publicProviderDto.js';
+import {
   MAX_QUERY_LENGTH,
   MAX_QUERY_TOKENS,
   LOCATION_CATALOG,
@@ -794,10 +800,11 @@ async function fetchCandidateProviders({ categorySlug, subcategorySlug, parsed, 
     providerQuery.$or = providerOr;
   }
 
-  const candidateProviders = await Provider.find(providerQuery)
+  const candidateQuery = Provider.find(providerQuery)
     .sort({ publishedAt: -1 })
-    .limit(500)
-    .lean();
+    .limit(500);
+  applyPublicProjection(candidateQuery, PUBLIC_PROVIDER_SEARCH_PROJECTION);
+  const candidateProviders = await candidateQuery.lean();
 
   // For candidates whose services weren't yet fetched, load all their eligible ProviderService items
   const candidateIds = candidateProviders.map((p) => p._id);
@@ -1001,24 +1008,18 @@ export async function searchPublicProviders(params = {}) {
   const startIdx = (safePage - 1) * parsedLimit;
   const pagedItems = selectedResults.slice(startIdx, startIdx + parsedLimit);
 
-  // Format providers, strictly enforcing phone consent masking and omitting internal token arrays
-  const providers = pagedItems.map(({ provider, relEval, locEval }) => {
-    const clean = { ...provider };
-    delete clean.searchTokens;
-    delete clean.locationTokens;
-    if (!clean.consentToDisplayPhone) {
-      clean.contactNumber = null;
-    }
-    return {
-      ...clean,
+  // Format providers via strict public DTO allowlist (enforcing phone consent masking
+  // and stripping auth, account, moderation, deletion, email, address, and token fields)
+  const providers = pagedItems.map(({ provider, relEval, locEval }) =>
+    toPublicProviderDto(provider, {
       searchMeta: {
         relevanceScore: relEval.score,
         matchType: relEval.matchType,
         locationTier: locEval.tier,
         matchedServices: relEval.matchedServices,
       },
-    };
-  });
+    })
+  );
 
   // Build zero-result recovery info when total === 0
   let recovery = null;
@@ -1175,13 +1176,9 @@ export async function getSearchSuggestions(query = '', { type = 'all' } = {}) {
       .lean()
       .catch(() => []);
 
-    suggestions.providers = matchedProviders.map((p) => ({
-      businessName: p.businessName,
-      slug: p.slug,
-      city: p.city,
-      category: p.category,
-      subcategory: p.subcategory || '',
-    }));
+    suggestions.providers = matchedProviders
+      .map((p) => toPublicProviderSuggestionDto(p))
+      .filter(Boolean);
   }
 
   return suggestions;
